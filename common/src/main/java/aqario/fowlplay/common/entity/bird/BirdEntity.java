@@ -15,7 +15,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.game.DebugPacketSender;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -556,14 +555,10 @@ public abstract class BirdEntity extends Animal {
   @Override
   protected void sendDebugPackets() {
     super.sendDebugPackets();
-    DebugPacketSender.sendEntityBrain(this);
+    if (this.level() instanceof ServerLevel serverLevel) {
+      serverLevel.sendBrainDebug(this);
+    }
     FowlPlayDebugPackets.sendBirdData(this);
-    //        FowlPlayDebugPackets.sendGenericData(this,
-    //            Pair.of("fluid height", String.format("%.3f",
-    // this.getFluidHeight(FluidTags.WATER))),
-    //            Pair.of("is water above float height", this.isWaterAboveFloatHeight()),
-    //            Pair.of("y velocity", String.format("%.3f", this.getDeltaMovement().y))
-    //        );
   }
 
   /** equivalent to isPresent check on optional memory */

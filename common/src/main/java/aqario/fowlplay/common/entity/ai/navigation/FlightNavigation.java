@@ -4,7 +4,7 @@ import aqario.fowlplay.common.entity.bird.FlyingBirdEntity;
 import aqario.fowlplay.common.util.BirdUtils;
 import com.google.common.collect.ImmutableSet;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.DebugPacketSender;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
@@ -61,19 +61,6 @@ public class FlightNavigation extends GroundPathNavigation implements ExtendedNa
     return newPath;
   }
 
-  //    @Override
-  //    public boolean moveTo(double x, double y, double z, double speed) {
-  //        this.bird.getMoveControl().setWantedPosition(x, y, z, speed);
-  //        return true;
-  //    }
-  //
-  //    @Override
-  //    public boolean moveTo(Entity entity, double speed) {
-  //        this.bird.getMoveControl().setWantedPosition(entity.getX(), entity.getY(),
-  // entity.getZ(), speed);
-  //        return true;
-  //    }
-
   @Override
   protected boolean canMoveDirectly(Vec3 origin, Vec3 target) {
     return isClearForMovementBetween(this.bird, origin, target, true);
@@ -128,7 +115,10 @@ public class FlightNavigation extends GroundPathNavigation implements ExtendedNa
         this.bird.stopFlying();
       }
 
-      DebugPacketSender.sendPathFindingPacket(this.level, this.getMob(), this.getPath(), 0.1f);
+      if (this.level instanceof ServerLevel serverLevel) {
+        serverLevel.sendPathfindingPacket(this.getMob(), this.getPath(), 0.1f);
+      }
+
       if (!this.isDone()) {
         Vec3 vec3d = this.path.getNextEntityPos(this.bird);
         this.bird.getMoveControl().setWantedPosition(vec3d.x, vec3d.y, vec3d.z, this.speedModifier);
