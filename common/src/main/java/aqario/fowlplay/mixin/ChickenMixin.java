@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.ChickenEntity;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ChickenEntity.class, priority = 999)
+@Mixin(value = Chicken.class, priority = 999)
 public abstract class ChickenMixin extends Animal
     implements VariantHolder<ChickenVariant>, ChickenAnimationHolder {
   @Unique private final AnimationState fowlplay$standingState = new AnimationState();
@@ -60,12 +60,12 @@ public abstract class ChickenMixin extends Animal
 
   @Inject(
       method =
-          "getBreedOffspring(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/AgeableMob;)Lnet/minecraft/world/entity/animal/ChickenEntity;",
+          "getBreedOffspring(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/AgeableMob;)Lnet/minecraft/world/entity/animal/Chicken;",
       at = @At("HEAD"),
       cancellable = true)
   private void fowlplay$createChild(
-      ServerLevel level, AgeableMob otherParent, CallbackInfoReturnable<ChickenEntity> cir) {
-    ChickenEntity child = EntityType.CHICKEN.create(level);
+      ServerLevel level, AgeableMob otherParent, CallbackInfoReturnable<Chicken> cir) {
+    Chicken child = EntityType.CHICKEN.create(level);
     if (child != null) {
       FPBuiltInRegistries.CHICKEN_VARIANT
           .getHolder(ChickenVariant.WHITE)
@@ -91,12 +91,12 @@ public abstract class ChickenMixin extends Animal
 
   @Override
   public Holder<ChickenVariant> getVariant() {
-    return DataAttachmentHelper.getChickenVariant((ChickenEntity) (Object) this);
+    return DataAttachmentHelper.getChickenVariant((Chicken) (Object) this);
   }
 
   @Override
   public void setVariant(Holder<ChickenVariant> variant) {
-    DataAttachmentHelper.setChickenVariant((ChickenEntity) (Object) this, variant);
+    DataAttachmentHelper.setChickenVariant((Chicken) (Object) this, variant);
   }
 
   @Override

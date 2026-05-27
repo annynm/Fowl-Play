@@ -10,9 +10,9 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.animal.ChickenEntity;
+import net.minecraft.world.entity.animal.Chicken;
 
-public class CustomChickenRenderer extends MobRenderer<ChickenEntity, CustomChickenModel> {
+public class CustomChickenRenderer extends MobRenderer<Chicken, CustomChickenModel> {
   private final AdultBabyModelPair<CustomChickenModel> modelPair;
 
   public CustomChickenRenderer(EntityRendererProvider.Context context) {
@@ -29,7 +29,7 @@ public class CustomChickenRenderer extends MobRenderer<ChickenEntity, CustomChic
 
   @Override
   public void render(
-      ChickenEntity chicken,
+      Chicken chicken,
       float f,
       float g,
       PoseStack matrices,
@@ -44,7 +44,7 @@ public class CustomChickenRenderer extends MobRenderer<ChickenEntity, CustomChic
 
   @SuppressWarnings("unchecked")
   @Override
-  public ResourceLocation getTextureLocation(ChickenEntity chicken) {
+  public ResourceLocation getTextureLocation(Chicken chicken) {
     return ((VariantHolder<ChickenVariant>) chicken).getVariant().value().texture(chicken.isBaby());
   }
 }

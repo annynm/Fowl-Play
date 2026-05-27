@@ -9,9 +9,9 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.animal.ChickenEntity;
+import net.minecraft.world.entity.animal.Chicken;
 
-public class CustomChickenModel extends HierarchicalModel<ChickenEntity> {
+public class CustomChickenModel extends HierarchicalModel<Chicken> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("chicken"), "main");
   public final ModelPart root;
@@ -174,7 +174,7 @@ public class CustomChickenModel extends HierarchicalModel<ChickenEntity> {
 
   @Override
   public void setupAnim(
-      ChickenEntity chicken,
+      Chicken chicken,
       float limbSwing,
       float limbSwingAmount,
       float ageInTicks,
