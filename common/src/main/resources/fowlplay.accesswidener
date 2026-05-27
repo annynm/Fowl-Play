@@ -55,9 +55,6 @@ accessible field net/minecraft/world/level/entity/EntitySection storage Lnet/min
 # Entities
 accessible method net/minecraft/world/entity/Entity setSharedFlag (IZ)V
 
-# Schedule
-accessible field net/minecraft/world/entity/schedule/Schedule timelines Ljava/util/Map;
-
 # Navigation
 extendable method net/minecraft/world/entity/ai/navigation/GroundPathNavigation getSurfaceY ()I
 accessible field net/minecraft/world/entity/ai/navigation/WaterBoundPathNavigation allowBreaching Z
