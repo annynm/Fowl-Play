@@ -16,71 +16,48 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
-    compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentFabric.extendsFrom common
 
-    // Files in this configuration will be bundled into your mod using the Shadow plugin.
-    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
     shadowBundle {
         canBeResolved = true
         canBeConsumed = false
     }
+
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
 }
 
 dependencies {
-    // Mappings
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.parchment_mappings_version}@zip")
-    }
-
-    // Fabric Loader
     modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
-
-    // Fabric API
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // Architectury
-    modImplementation("dev.architectury:architectury-fabric:${project.architectury_version}")
+    modImplementation "dev.architectury:architectury-fabric:${project.architectury_version}"
 
-    // Cloth Config
-    modRuntimeOnly("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}")
+    modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
 
-    // Debug Utils
+    modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}-fabric"
+
     modImplementation("io.github.flemmli97:debugutils:${project.debugutils_version}-fabric") {
         transitive = false
     }
 
-    // Fabric Language Kotlin
-    modRuntimeOnly("net.fabricmc:fabric-language-kotlin:${project.fabric_language_kotlin_version}")
-
-    // Mod Menu
     modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}") {
         transitive = false
     }
 
-    // NBT Autocomplete
-    modRuntimeOnly("maven.modrinth:nbt-autocomplete:${project.nbt_autocomplete_version}-fabric-1.21.11")
+    modRuntimeOnly "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
 
-    // Observable
-    // modRuntimeOnly("maven.modrinth:observable:${project.observable_version}+fabric")
+    modRuntimeOnly "net.fabricmc:fabric-language-kotlin:${project.fabric_language_kotlin_version}"
 
-    // Smart Brain Lib
-    modImplementation("net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}")
+    modRuntimeOnly "maven.modrinth:nbt-autocomplete:${project.nbt_autocomplete_version}-fabric-1.21.11"
 
-    // Spark
-    modRuntimeOnly("me.lucko:fabric-permissions-api:${project.fabric_permissions_api_version}")
-    modRuntimeOnly("maven.modrinth:spark:${project.spark_version}-fabric")
+    modRuntimeOnly "maven.modrinth:spark:${project.spark_version}-fabric"
 
-    // Suggestion Tweaker
-    // modRuntimeOnly("maven.modrinth:suggestion-tweaker:${project.suggestion_tweaker_version}+fabric")
+    common(project(path: ":common", configuration: "namedElements")) {
+        transitive = false
+    }
 
-    // Yet Another Config Lib
-    modImplementation("dev.isxander:yet-another-config-lib:${project.yacl_version}-fabric")
-
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+    shadowBundle project(path: ":common", configuration: "transformProductionFabric")
 }
 
 fabricApi {
@@ -88,17 +65,19 @@ fabricApi {
 }
 
 shadowJar {
-    exclude "architectury.common.json"
-
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
+
     archiveClassifier.set("dev-shadow")
+
+    exclude "architectury.common.json"
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
-    injectAccessWidener = true
-    inputFile.set shadowJar.archiveFile
+    inputFile.set(shadowJar.archiveFile)
+
     dependsOn shadowJar
+
+    injectAccessWidener = true
+
     archiveClassifier.set(null)
 }
