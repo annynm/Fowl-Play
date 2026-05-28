@@ -1,12 +1,16 @@
 package aqario.fowlplay.client.render.entity.model;
 
-import aqario.fowlplay.common.entity.bird.BirdEntity;
+import aqario.fowlplay.client.render.entity.state.BirdRenderState;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.util.Mth;
 
-public abstract class BirdModel<E extends BirdEntity> extends EntityModel<E> {
+/**
+ * Abstract base model for all bird entities. Parameterized by BirdRenderState (not entity type) per
+ * 1.21.11 rendering architecture. Subclasses implement setAnimations() using data from the render
+ * state.
+ */
+public abstract class BirdModel<S extends BirdRenderState> extends EntityModel<S> {
   public final ModelPart root;
   public final ModelPart body;
   public final ModelPart neck;
@@ -37,41 +41,35 @@ public abstract class BirdModel<E extends BirdEntity> extends EntityModel<E> {
   }
 
   @Override
-  public final void setupAnim(
-      E entity,
-      float limbSwing,
-      float limbSwingAmount,
-      float ageInTicks,
-      float netHeadYaw,
-      float headPitch) {}
-
-  @Override
-  public void prepareMobModel(E entity, float limbSwing, float limbSwingAmount, float partialTick) {
+  public void setupAnim(S state) {
+    // Reset all parts to default pose before applying animations
     this.root().getAllParts().forEach(ModelPart::resetPose);
-    float ageInTicks = entity.tickCount + partialTick;
-    float bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
-    float headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
-    float relativeHeadYaw = Mth.wrapDegrees(headYaw - bodyYaw);
 
-    float headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
-    if (LivingEntityRenderer.isEntityUpsideDown(entity)) {
-      headPitch *= -1.0F;
-      relativeHeadYaw *= -1.0F;
-    }
+    // Calculate interpolated rotation values from render state
+    float relativeHeadYaw = Mth.wrapDegrees(state.headYaw - state.bodyYaw);
+    float headPitch = state.headPitch;
 
-    this.setAnimations(
-        entity, limbSwing, limbSwingAmount, ageInTicks, relativeHeadYaw, headPitch, partialTick);
+    // Apply head/body rotation (always applied regardless of animation state)
+    this.updateHeadRotation(relativeHeadYaw, headPitch);
+
+    // Delegate to subclass for entity-specific animations
+    this.setAnimations(state);
   }
 
-  protected void setAnimations(
-      E entity,
-      float limbSwing,
-      float limbSwingAmount,
-      float ageInTicks,
-      float netHeadYaw,
-      float headPitch,
-      float partialTick) {}
+  /**
+   * Applies entity-specific animations based on the current render state. Subclasses should read
+   * animation flags and states from the BirdRenderState and call animate()/animateWalk()
+   * accordingly.
+   *
+   * @param state the current render state containing all animation data
+   */
+  protected abstract void setAnimations(S state);
 
+  /**
+   * Applies head and neck rotation based on interpolated yaw/pitch values. Can be overridden by
+   * subclasses to customize rotation behavior (e.g., FlyingBirdModel clamps differently when
+   * flying).
+   */
   protected void updateHeadRotation(float headYaw, float headPitch) {
     headYaw = Mth.clamp(headYaw, -135.0F, 135.0F);
     headPitch = Mth.clamp(headPitch, -45.0F, 45.0F);

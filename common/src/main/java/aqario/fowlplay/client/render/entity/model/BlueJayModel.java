@@ -1,14 +1,14 @@
 package aqario.fowlplay.client.render.entity.model;
 
 import aqario.fowlplay.client.render.entity.animation.BlueJayAnimations;
-import aqario.fowlplay.common.entity.bird.passerine.BlueJayEntity;
+import aqario.fowlplay.client.render.entity.state.BirdRenderState;
 import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 
-public class BlueJayModel extends FlyingBirdModel<BlueJayEntity> {
+public class BlueJayModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("blue_jay"), "main");
   public final ModelPart crest;
@@ -159,20 +159,12 @@ public class BlueJayModel extends FlyingBirdModel<BlueJayEntity> {
   }
 
   @Override
-  protected void setAnimations(
-      BlueJayEntity entity,
-      float limbSwing,
-      float limbSwingAmount,
-      float ageInTicks,
-      float netHeadYaw,
-      float headPitch,
-      float partialTick) {
-    if (!entity.isFlying() && !entity.isInWaterOrBubble()) {
-      this.animateWalk(BlueJayAnimations.WALKING, limbSwing, limbSwingAmount, 6F, 6F);
+  protected void setAnimations(BirdRenderState state) {
+    if (!state.isFlying && !state.isInWaterOrBubble) {
+      this.animateWalk(BlueJayAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 6F, 6F);
     }
-    this.animate(entity.standingState, BlueJayAnimations.STANDING, ageInTicks);
-    this.animate(entity.swimmingState, BlueJayAnimations.SWIMMING, ageInTicks);
-    this.animate(entity.glidingState, BlueJayAnimations.GLIDING, ageInTicks);
-    this.animate(entity.flappingState, BlueJayAnimations.FLAPPING, ageInTicks);
+    this.animate(state.standingState, BlueJayAnimations.STANDING, state.ageInTicks);
+    this.animate(state.swimmingState, BlueJayAnimations.SWIMMING, state.ageInTicks);
+    // glidingState and flappingState will be available once added to BirdRenderState
   }
 }

@@ -109,4 +109,6 @@ public class BabyPenguinModel extends PenguinModel {
 
     return LayerDefinition.create(modelData, 64, 64);
   }
+
+  // Baby penguins inherit adult animations via PenguinModel.setAnimations()
 }

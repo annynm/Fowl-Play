@@ -1,17 +1,16 @@
 package aqario.fowlplay.client.render.entity.model;
 
 import aqario.fowlplay.client.render.entity.animation.ChickenAnimations;
-import aqario.fowlplay.common.util.ChickenAnimationHolder;
+import aqario.fowlplay.client.render.entity.state.BirdRenderState;
 import aqario.fowlplay.core.FowlPlay;
-import net.minecraft.client.model.HierarchicalModel;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.animal.Chicken;
 
-public class CustomChickenModel extends HierarchicalModel<Chicken> {
+public class CustomChickenModel extends EntityModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("chicken"), "main");
   public final ModelPart root;
@@ -173,16 +172,12 @@ public class CustomChickenModel extends HierarchicalModel<Chicken> {
   }
 
   @Override
-  public void setupAnim(
-      Chicken chicken,
-      float limbSwing,
-      float limbSwingAmount,
-      float ageInTicks,
-      float netHeadYaw,
-      float headPitch) {
+  public void setupAnim(BirdRenderState state) {
     this.root().getAllParts().forEach(ModelPart::resetPose);
-    this.updateHeadRotation(netHeadYaw, headPitch);
-    if (chicken.onGround() || chicken.isInWaterOrBubble()) {
+    this.updateHeadRotation(state.headYaw, state.headPitch);
+
+    // Wing visibility based on ground/water state
+    if (state.onGround || state.isInWaterOrBubble) {
       this.leftWingOpen.visible = false;
       this.rightWingOpen.visible = false;
       this.leftWing.visible = true;
@@ -194,21 +189,17 @@ public class CustomChickenModel extends HierarchicalModel<Chicken> {
       this.rightWing.visible = false;
     }
 
-    if (chicken.onGround() && !chicken.isInWaterOrBubble()) {
-      this.animateWalk(ChickenAnimations.WALKING, limbSwing, limbSwingAmount, 3F, 3F);
+    if (state.onGround && !state.isInWaterOrBubble) {
+      this.animateWalk(ChickenAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 3F, 3F);
     }
-    this.animate(
-        ((ChickenAnimationHolder) chicken).fowlplay$getStandingState(),
-        ChickenAnimations.STANDING,
-        ageInTicks);
-    this.animate(
-        ((ChickenAnimationHolder) chicken).fowlplay$getFlappingState(),
-        ChickenAnimations.FLAPPING,
-        ageInTicks);
-    this.animate(
-        ((ChickenAnimationHolder) chicken).fowlplay$getFloatingState(),
-        ChickenAnimations.SWIMMING,
-        ageInTicks);
+    this.animate(state.chickenStandingState, ChickenAnimations.STANDING, state.ageInTicks);
+    this.animate(state.chickenFlappingState, ChickenAnimations.FLAPPING, state.ageInTicks);
+    this.animate(state.chickenFloatingState, ChickenAnimations.SWIMMING, state.ageInTicks);
+  }
+
+  @Override
+  public ModelPart root() {
+    return this.root;
   }
 
   protected void updateHeadRotation(float headYaw, float headPitch) {
@@ -216,10 +207,5 @@ public class CustomChickenModel extends HierarchicalModel<Chicken> {
     headPitch = Mth.clamp(headPitch, -25.0F, 45.0F);
     this.head.yRot = headYaw * (float) (Math.PI / 180.0);
     this.head.xRot = headPitch * (float) (Math.PI / 180.0);
-  }
-
-  @Override
-  public ModelPart root() {
-    return this.root;
   }
 }

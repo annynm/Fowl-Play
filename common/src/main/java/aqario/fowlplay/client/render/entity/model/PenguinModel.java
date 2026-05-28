@@ -1,7 +1,7 @@
 package aqario.fowlplay.client.render.entity.model;
 
 import aqario.fowlplay.client.render.entity.animation.PenguinAnimations;
-import aqario.fowlplay.common.entity.bird.penguin.PenguinEntity;
+import aqario.fowlplay.client.render.entity.state.BirdRenderState;
 import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -9,7 +9,7 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.util.Mth;
 
-public class PenguinModel extends BirdModel<PenguinEntity> {
+public class PenguinModel extends BirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("penguin"), "main");
 
@@ -119,30 +119,15 @@ public class PenguinModel extends BirdModel<PenguinEntity> {
   }
 
   @Override
-  protected void setAnimations(
-      PenguinEntity entity,
-      float limbSwing,
-      float limbSwingAmount,
-      float ageInTicks,
-      float netHeadYaw,
-      float headPitch,
-      float partialTick) {
-    if (entity.isSwimming()) {
-      this.root.yRot = netHeadYaw * (float) (Math.PI / 180.0);
-      this.root.xRot = headPitch * (float) (Math.PI / 180.0);
+  protected void setAnimations(BirdRenderState state) {
+    // TODO: Penguin-specific animations will read from state once
+    // PenguinRenderState subclass is created with sliding/dancing flags.
+    // For now, basic standing/swimming via BirdRenderState fields:
+    if (!state.isInWaterOrBubble) {
+      this.updateHeadRotation(Mth.wrapDegrees(state.headYaw - state.bodyYaw), state.headPitch);
     }
-    if (!entity.isSwimming() && !entity.isSliding()) {
-      this.updateHeadRotation(netHeadYaw, headPitch);
-      this.animateWalk(PenguinAnimations.WALKING, limbSwing, limbSwingAmount, 7F, 7F);
-    }
-    this.animate(entity.standingState, PenguinAnimations.STANDING, ageInTicks);
-    this.animate(entity.slidingState, PenguinAnimations.SLIDING, ageInTicks);
-    this.animate(
-        entity.slidingTransitionState, PenguinAnimations.SLIDING_TRANSITION, ageInTicks, 1.0F);
-    this.animate(
-        entity.standingTransitionState, PenguinAnimations.STANDING_TRANSITION, ageInTicks, 1.0F);
-    this.animate(entity.swimmingState, PenguinAnimations.SWIMMING, ageInTicks);
-    this.animate(entity.dancingState, PenguinAnimations.DANCING, ageInTicks);
+    this.animate(state.standingState, PenguinAnimations.STANDING, state.ageInTicks);
+    this.animate(state.swimmingState, PenguinAnimations.SWIMMING, state.ageInTicks);
   }
 
   @Override

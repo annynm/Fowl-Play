@@ -1,13 +1,12 @@
 package aqario.fowlplay.client.render.entity.model;
 
 import aqario.fowlplay.client.render.entity.animation.ChickenAnimations;
-import aqario.fowlplay.common.util.ChickenAnimationHolder;
+import aqario.fowlplay.client.render.entity.state.BirdRenderState;
 import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.world.entity.animal.Chicken;
 
 public class CustomBabyChickenModel extends CustomChickenModel {
   public static final ModelLayerLocation MODEL_LAYER =
@@ -124,26 +123,14 @@ public class CustomBabyChickenModel extends CustomChickenModel {
   }
 
   @Override
-  public void setupAnim(
-      Chicken chicken,
-      float limbSwing,
-      float limbSwingAmount,
-      float ageInTicks,
-      float netHeadYaw,
-      float headPitch) {
+  public void setupAnim(BirdRenderState state) {
     this.root().getAllParts().forEach(ModelPart::resetPose);
-    this.updateHeadRotation(netHeadYaw, headPitch);
+    this.updateHeadRotation(state.headYaw, state.headPitch);
 
-    if (chicken.onGround() && !chicken.isInWaterOrBubble()) {
-      this.animateWalk(ChickenAnimations.WALKING, limbSwing, limbSwingAmount, 3F, 3F);
+    if (state.onGround && !state.isInWaterOrBubble) {
+      this.animateWalk(ChickenAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 3F, 3F);
     }
-    this.animate(
-        ((ChickenAnimationHolder) chicken).fowlplay$getStandingState(),
-        ChickenAnimations.STANDING,
-        ageInTicks);
-    this.animate(
-        ((ChickenAnimationHolder) chicken).fowlplay$getFloatingState(),
-        ChickenAnimations.SWIMMING,
-        ageInTicks);
+    this.animate(state.chickenStandingState, ChickenAnimations.STANDING, state.ageInTicks);
+    this.animate(state.chickenFloatingState, ChickenAnimations.SWIMMING, state.ageInTicks);
   }
 }
