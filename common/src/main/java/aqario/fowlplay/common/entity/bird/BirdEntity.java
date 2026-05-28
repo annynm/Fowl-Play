@@ -88,7 +88,7 @@ public abstract class BirdEntity extends Animal {
   public SpawnGroupData finalizeSpawn(
       ServerLevelAccessor level,
       DifficultyInstance difficulty,
-      MobSpawnType spawnType,
+      EntitySpawnReason spawnType,
       @Nullable SpawnGroupData spawnGroupData) {
     this.setYRot(level.getRandom().nextFloat() * 360.0F);
     this.setYBodyRot(this.getYRot());
@@ -99,9 +99,10 @@ public abstract class BirdEntity extends Animal {
     return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
   }
 
-  protected boolean shouldSpawnAsAmbient(MobSpawnType spawnType) {
+  protected boolean shouldSpawnAsAmbient(EntitySpawnReason spawnType) {
     return this.shouldBeAmbient()
-        && (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION);
+        && (spawnType == EntitySpawnReason.NATURAL
+            || spawnType == EntitySpawnReason.CHUNK_GENERATION);
   }
 
   protected boolean shouldBeAmbient() {

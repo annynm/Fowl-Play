@@ -9,73 +9,68 @@ import aqario.fowlplay.common.worldgen.SparrowSpawner;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FowlPlay {
-    public static final Logger LOGGER = LoggerFactory.getLogger("Fowl Play");
-    public static final String ID = "fowlplay";
+  public static final Logger LOGGER = LoggerFactory.getLogger("Fowl Play");
+  public static final String ID = "fowlplay";
 
-    public static ResourceLocation id(PathBuilder path) {
-        return ResourceLocation.fromNamespaceAndPath(ID, path.build());
-    }
+  public static Identifier id(PathBuilder path) {
+    return Identifier.fromNamespaceAndPath(ID, path.build());
+  }
 
-    public static ResourceLocation id(String id) {
-        return ResourceLocation.fromNamespaceAndPath(ID, id);
-    }
+  public static Identifier id(String id) {
+    return Identifier.fromNamespaceAndPath(ID, id);
+  }
 
-    public static boolean isDebugUtilsLoaded() {
-        return Platform.isModLoaded("debugutils");
-    }
+  public static boolean isDebugUtilsLoaded() {
+    return Platform.isModLoaded("debugutils");
+  }
 
-    public static void earlyInit() {
-        Mod mod = Platform.getMod(ID);
-        LOGGER.info("Loading {} {}", mod.getName(), mod.getVersion());
-        FowlPlayConfig.load();
+  public static void earlyInit() {
+    Mod mod = Platform.getMod(ID);
+    LOGGER.info("Loading {} {}", mod.getName(), mod.getVersion());
+    FowlPlayConfig.load();
 
-        FPRegistries.init();
-        FPBuiltInRegistries.init();
-    }
+    FPRegistries.init();
+    FPBuiltInRegistries.init();
+  }
 
-    public static void init() {
-        ChickenVariant.REGISTRAR.register();
-        DuckVariant.REGISTRAR.register();
-        GooseVariant.REGISTRAR.register();
-        GullVariant.REGISTRAR.register();
-        PigeonVariant.REGISTRAR.register();
-        SparrowVariant.REGISTRAR.register();
+  public static void init() {
+    ChickenVariant.REGISTRAR.register();
+    DuckVariant.REGISTRAR.register();
+    GooseVariant.REGISTRAR.register();
+    GullVariant.REGISTRAR.register();
+    PigeonVariant.REGISTRAR.register();
+    SparrowVariant.REGISTRAR.register();
 
-        FPActivities.REGISTRAR.register();
-        FPBlocks.REGISTRAR.register();
-        FPEntityTypes.REGISTRAR.register();
-        FPItems.REGISTRAR.register();
-        FPMemoryTypes.REGISTRAR.register();
-        FPParticleTypes.REGISTRAR.register();
-        FPSchedules.REGISTRAR.register();
-        FPSensorTypes.REGISTRAR.register();
-        FPSoundEvents.REGISTRAR.register();
-        FPEntityDataSerializers.REGISTRAR.register();
+    FPActivities.REGISTRAR.register();
+    FPBlocks.REGISTRAR.register();
+    FPEntityTypes.REGISTRAR.register();
+    FPItems.REGISTRAR.register();
+    FPMemoryTypes.REGISTRAR.register();
+    FPParticleTypes.REGISTRAR.register();
+    FPSchedules.REGISTRAR.register();
+    FPSensorTypes.REGISTRAR.register();
+    FPSoundEvents.REGISTRAR.register();
+    FPEntityDataSerializers.REGISTRAR.register();
 
-        BiomeModifier.register();
-        initSpawners();
-    }
+    BiomeModifier.register();
+    initSpawners();
+  }
 
-    private static void initSpawners() {
-        PigeonSpawner pigeonSpawner = new PigeonSpawner();
-        SparrowSpawner sparrowSpawner = new SparrowSpawner();
+  private static void initSpawners() {
+    PigeonSpawner pigeonSpawner = new PigeonSpawner();
+    SparrowSpawner sparrowSpawner = new SparrowSpawner();
 
-        TickEvent.SERVER_LEVEL_POST.register(world -> {
-            pigeonSpawner.tick(
-                world,
-                world.getServer().isSpawningMonsters(),
-                world.getServer().isSpawningAnimals()
-            );
-            sparrowSpawner.tick(
-                world,
-                world.getServer().isSpawningMonsters(),
-                world.getServer().isSpawningAnimals()
-            );
+    TickEvent.SERVER_LEVEL_POST.register(
+        world -> {
+          pigeonSpawner.tick(
+              world, world.getServer().isSpawningMonsters(), world.getServer().isSpawningAnimals());
+          sparrowSpawner.tick(
+              world, world.getServer().isSpawningMonsters(), world.getServer().isSpawningAnimals());
         });
-    }
+  }
 }
