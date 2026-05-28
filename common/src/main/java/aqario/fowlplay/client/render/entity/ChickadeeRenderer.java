@@ -7,9 +7,11 @@ import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class ChickadeeRenderer extends MobRenderer<ChickadeeEntity, ChickadeeModel> {
+public class ChickadeeRenderer
+    extends MobRenderer<ChickadeeEntity, BirdRenderState, ChickadeeModel> {
   private static final Identifier TEXTURE =
       FowlPlay.id("textures/entity/chickadee/black_capped_chickadee.png");
 
@@ -21,7 +23,35 @@ public class ChickadeeRenderer extends MobRenderer<ChickadeeEntity, ChickadeeMod
   }
 
   @Override
-  public Identifier getTextureLocation(ChickadeeEntity entity) {
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(
+      ChickadeeEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+    state.isFlying = entity.isFlying();
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+    state.viewXRot = entity.getViewXRot(partialTick);
+    state.roll = entity.getRoll(partialTick);
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
+    state.glidingState.copyFrom(entity.glidingState);
+    state.flappingState.copyFrom(entity.flappingState);
+  }
+
+  @Override
+  public Identifier getTextureLocation(BirdRenderState state) {
     return TEXTURE;
   }
 }

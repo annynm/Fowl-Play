@@ -6,9 +6,10 @@ import aqario.fowlplay.common.entity.bird.shorebird.GullEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class GullRenderer extends MobRenderer<GullEntity, GullModel> {
+public class GullRenderer extends MobRenderer<GullEntity, BirdRenderState, GullModel> {
   public GullRenderer(EntityRendererProvider.Context context) {
     super(context, new GullModel(context.bakeLayer(GullModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
@@ -17,7 +18,35 @@ public class GullRenderer extends MobRenderer<GullEntity, GullModel> {
   }
 
   @Override
-  public Identifier getTextureLocation(GullEntity gull) {
-    return gull.getVariant().value().texture();
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(GullEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+    state.isFlying = entity.isFlying();
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+    state.viewXRot = entity.getViewXRot(partialTick);
+    state.roll = entity.getRoll(partialTick);
+    state.variantTexture = entity.getVariant().value().texture();
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
+    state.glidingState.copyFrom(entity.glidingState);
+    state.flappingState.copyFrom(entity.flappingState);
+  }
+
+  @Override
+  public Identifier getTextureLocation(BirdRenderState state) {
+    return state.variantTexture;
   }
 }

@@ -9,9 +9,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class PigeonRenderer extends MobRenderer<PigeonEntity, PigeonModel> {
+public class PigeonRenderer extends MobRenderer<PigeonEntity, BirdRenderState, PigeonModel> {
   private static final Identifier MARTHA_TEXTURE = FowlPlay.id("textures/entity/pigeon/martha.png");
 
   public PigeonRenderer(EntityRendererProvider.Context context) {
@@ -23,11 +24,41 @@ public class PigeonRenderer extends MobRenderer<PigeonEntity, PigeonModel> {
   }
 
   @Override
-  public Identifier getTextureLocation(PigeonEntity pigeon) {
-    String string = ChatFormatting.stripFormatting(pigeon.getName().getString());
-    if ("Martha".equals(string)) {
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(PigeonEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+    state.isFlying = entity.isFlying();
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+    state.isSitting = entity.isInSittingPose();
+    state.viewXRot = entity.getViewXRot(partialTick);
+    state.roll = entity.getRoll(partialTick);
+    state.customName = ChatFormatting.stripFormatting(entity.getName().getString());
+    state.variantTexture = entity.getVariant().value().texture();
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
+    state.glidingState.copyFrom(entity.glidingState);
+    state.flappingState.copyFrom(entity.flappingState);
+    state.sittingState.copyFrom(entity.sittingState);
+  }
+
+  @Override
+  public Identifier getTextureLocation(BirdRenderState state) {
+    if ("Martha".equals(state.customName)) {
       return MARTHA_TEXTURE;
     }
-    return pigeon.getVariant().value().texture();
+    return state.variantTexture;
   }
 }

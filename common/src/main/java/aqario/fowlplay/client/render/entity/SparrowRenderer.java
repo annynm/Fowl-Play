@@ -7,9 +7,10 @@ import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class SparrowRenderer extends MobRenderer<SparrowEntity, SparrowModel> {
+public class SparrowRenderer extends MobRenderer<SparrowEntity, BirdRenderState, SparrowModel> {
   private static final Identifier TEXTURE =
       FowlPlay.id("textures/entity/sparrow/house_sparrow.png");
 
@@ -21,7 +22,37 @@ public class SparrowRenderer extends MobRenderer<SparrowEntity, SparrowModel> {
   }
 
   @Override
-  public Identifier getTextureLocation(SparrowEntity entity) {
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(
+      SparrowEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+    state.isFlying = entity.isFlying();
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+    state.viewXRot = entity.getViewXRot(partialTick);
+    state.roll = entity.getRoll(partialTick);
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
+    state.glidingState.copyFrom(entity.glidingState);
+    state.flappingState.copyFrom(entity.flappingState);
+    state.preeningState.copyFrom(entity.preeningState);
+    state.scratchingState.copyFrom(entity.scratchingState);
+  }
+
+  @Override
+  public Identifier getTextureLocation(BirdRenderState state) {
     return TEXTURE;
   }
 }

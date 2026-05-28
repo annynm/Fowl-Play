@@ -13,49 +13,72 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class GooseRenderer extends MobRenderer<GooseEntity, GooseModel> {
-  private final Map<GooseVariant.ModelType, AdultBabyModelPair<GooseModel>> models;
+public class GooseRenderer extends MobRenderer<GooseEntity, BirdRenderState, GooseModel> {
+  private final Map<GooseVariant.ModelType, AdultBabyModelPair<BirdRenderState, GooseModel>> models;
 
   public GooseRenderer(EntityRendererProvider.Context context) {
     super(context, new GooseModel(context.bakeLayer(GooseModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
         new BirdHeldItemLayer<>(
             this, context.getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
-    this.models = bakeModels(context);
+    this.models =
+        Map.of(
+            GooseVariant.ModelType.WILD,
+            new AdultBabyModelPair<>(
+                new GooseModel(context.bakeLayer(GooseModel.MODEL_LAYER)),
+                new BabyGooseModel(context.bakeLayer(BabyGooseModel.MODEL_LAYER))),
+            GooseVariant.ModelType.DOMESTIC,
+            new AdultBabyModelPair<>(
+                new DomesticGooseModel(context.bakeLayer(DomesticGooseModel.MODEL_LAYER)),
+                new BabyGooseModel(context.bakeLayer(BabyGooseModel.MODEL_LAYER))));
   }
 
-  private static Map<GooseVariant.ModelType, AdultBabyModelPair<GooseModel>> bakeModels(
-      EntityRendererProvider.Context context) {
-    return Map.of(
-        GooseVariant.ModelType.WILD,
-        new AdultBabyModelPair<>(
-            new GooseModel(context.bakeLayer(GooseModel.MODEL_LAYER)),
-            new BabyGooseModel(context.bakeLayer(BabyGooseModel.MODEL_LAYER))),
-        GooseVariant.ModelType.DOMESTIC,
-        new AdultBabyModelPair<>(
-            new DomesticGooseModel(context.bakeLayer(DomesticGooseModel.MODEL_LAYER)),
-            new BabyGooseModel(context.bakeLayer(BabyGooseModel.MODEL_LAYER))));
+  @Override
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(GooseEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+    state.isFlying = entity.isFlying();
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+    state.viewXRot = entity.getViewXRot(partialTick);
+    state.roll = entity.getRoll(partialTick);
+    state.isDomestic = entity.isDomestic();
+    state.gooseModelType = entity.getVariant().value().modelType(entity.isDomestic());
+    state.variantTexture =
+        entity.getVariant().value().texture(entity.isBaby(), entity.isDomestic());
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
+    state.glidingState.copyFrom(entity.glidingState);
+    state.flappingState.copyFrom(entity.flappingState);
   }
 
   @Override
   public void render(
-      GooseEntity goose,
-      float f,
-      float g,
+      BirdRenderState state,
       PoseStack matrices,
       MultiBufferSource vertexConsumerProvider,
-      int i) {
-    this.model =
-        this.models
-            .get(goose.getVariant().value().modelType(goose.isDomestic()))
-            .getModel(goose.isBaby());
-    super.render(goose, f, g, matrices, vertexConsumerProvider, i);
+      int packedLight) {
+    this.model = this.models.get(state.gooseModelType).getModel(state.isBaby);
+    super.render(state, matrices, vertexConsumerProvider, packedLight);
   }
 
   @Override
-  public Identifier getTextureLocation(GooseEntity goose) {
-    return goose.getVariant().value().texture(goose.isBaby(), goose.isDomestic());
+  public Identifier getTextureLocation(BirdRenderState state) {
+    return state.variantTexture;
   }
 }

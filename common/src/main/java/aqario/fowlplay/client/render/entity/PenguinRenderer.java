@@ -12,65 +12,90 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class PenguinRenderer extends MobRenderer<PenguinEntity, PenguinModel> {
+public class PenguinRenderer extends MobRenderer<PenguinEntity, BirdRenderState, PenguinModel> {
   private static final Identifier TEXTURE = FowlPlay.id("textures/entity/penguin/penguin.png");
   private static final Identifier BABY_TEXTURE =
       FowlPlay.id("textures/entity/penguin/penguin_baby.png");
-  private final AdultBabyModelPair<PenguinModel> modelPair;
+  private final AdultBabyModelPair<BirdRenderState, PenguinModel> modelPair;
 
   public PenguinRenderer(EntityRendererProvider.Context context) {
     super(context, new PenguinModel(context.bakeLayer(PenguinModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
         new BirdHeldItemLayer<>(
             this, context.getItemInHandRenderer(), new Vec3(0.0, -0.145, -0.1475)));
-    this.modelPair = bakeModels(context);
+    this.modelPair =
+        new AdultBabyModelPair<>(
+            new PenguinModel(context.bakeLayer(PenguinModel.MODEL_LAYER)),
+            new BabyPenguinModel(context.bakeLayer(BabyPenguinModel.MODEL_LAYER)));
   }
 
-  private static AdultBabyModelPair<PenguinModel> bakeModels(
-      EntityRendererProvider.Context context) {
-    return new AdultBabyModelPair<>(
-        new PenguinModel(context.bakeLayer(PenguinModel.MODEL_LAYER)),
-        new BabyPenguinModel(context.bakeLayer(BabyPenguinModel.MODEL_LAYER)));
+  @Override
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(
+      PenguinEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+
+    state.isFlying = false;
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+
+    state.customName = ChatFormatting.stripFormatting(entity.getName().getString());
+
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
   }
 
   @Override
   public void render(
-      PenguinEntity penguin,
-      float f,
-      float g,
+      BirdRenderState state,
       PoseStack matrices,
       MultiBufferSource vertexConsumerProvider,
-      int i) {
-    this.model = this.modelPair.getModel(penguin.isBaby());
-    if (penguin.isBaby()) {
+      int packedLight) {
+    this.model = this.modelPair.getModel(state.isBaby);
+
+    if (state.isBaby) {
+      matrices.pushPose();
       matrices.scale(0.8F, 0.8F, 0.8F);
+      super.render(state, matrices, vertexConsumerProvider, packedLight);
+      matrices.popPose();
+    } else {
+      super.render(state, matrices, vertexConsumerProvider, packedLight);
     }
-    super.render(penguin, f, g, matrices, vertexConsumerProvider, i);
   }
 
   @Override
-  public Identifier getTextureLocation(PenguinEntity entity) {
-    return entity.isBaby() ? BABY_TEXTURE : TEXTURE;
+  public Identifier getTextureLocation(BirdRenderState state) {
+    return state.isBaby ? BABY_TEXTURE : TEXTURE;
   }
 
   @Override
-  protected void scale(PenguinEntity penguin, PoseStack matrices, float amount) {
-    super.scale(penguin, matrices, amount);
+  protected void scale(BirdRenderState state, PoseStack matrices, float amount) {
+    super.scale(state, matrices, amount);
 
-    String name = ChatFormatting.stripFormatting(penguin.getName().getString());
-    if (name.equalsIgnoreCase("rico")) {
-      matrices.scale(1.1F, 1F, 1F);
-    }
-    if (name.equalsIgnoreCase("skipper")) {
-      matrices.scale(1.25F, 0.9F, 1F);
-    }
-    if (name.equalsIgnoreCase("kowalski")) {
-      matrices.scale(1F, 1.1F, 1F);
-    }
-    if (name.equalsIgnoreCase("private")) {
-      matrices.scale(1.2F, 0.85F, 1F);
+    if (state.customName != null) {
+      switch (state.customName.toLowerCase()) {
+        case "rico" -> matrices.scale(1.1F, 1F, 1F);
+        case "skipper" -> matrices.scale(1.25F, 0.9F, 1F);
+        case "kowalski" -> matrices.scale(1F, 1.1F, 1F);
+        case "private" -> matrices.scale(1.2F, 0.85F, 1F);
+      }
     }
   }
 }

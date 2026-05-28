@@ -7,9 +7,10 @@ import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class BlueJayRenderer extends MobRenderer<BlueJayEntity, BlueJayModel> {
+public class BlueJayRenderer extends MobRenderer<BlueJayEntity, BirdRenderState, BlueJayModel> {
   private static final Identifier TEXTURE = FowlPlay.id("textures/entity/blue_jay/blue_jay.png");
 
   public BlueJayRenderer(EntityRendererProvider.Context context) {
@@ -20,7 +21,45 @@ public class BlueJayRenderer extends MobRenderer<BlueJayEntity, BlueJayModel> {
   }
 
   @Override
-  public Identifier getTextureLocation(BlueJayEntity entity) {
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(
+      BlueJayEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+
+    // Animation timing
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.limbSwing = entity.walkAnimation.position();
+    state.limbSwingAmount = entity.walkAnimation.speed();
+
+    // Interpolated rotation
+    state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+    state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+    state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+
+    // Movement/environment flags
+    state.isFlying = entity.isFlying();
+    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.onGround = entity.onGround();
+    state.isSleeping = entity.isSleeping();
+
+    // Flight-specific rotation
+    state.viewXRot = entity.getViewXRot(partialTick);
+    state.roll = entity.getRoll(partialTick);
+
+    // Sync animation states from entity to render state
+    state.standingState.copyFrom(entity.standingState);
+    state.swimmingState.copyFrom(entity.swimmingState);
+    state.sleepingState.copyFrom(entity.sleepingState);
+    state.glidingState.copyFrom(entity.glidingState);
+    state.flappingState.copyFrom(entity.flappingState);
+  }
+
+  @Override
+  public Identifier getTextureLocation(BirdRenderState state) {
     return TEXTURE;
   }
 }

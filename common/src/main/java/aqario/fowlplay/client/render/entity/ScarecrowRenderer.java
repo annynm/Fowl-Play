@@ -14,7 +14,8 @@ import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.resources.Identifier;
 
-public class ScarecrowRenderer extends LivingEntityRenderer<ScarecrowEntity, ScarecrowModel> {
+public class ScarecrowRenderer
+    extends LivingEntityRenderer<ScarecrowEntity, BirdRenderState, ScarecrowModel> {
   public static final Identifier TEXTURE = FowlPlay.id("textures/entity/scarecrow/scarecrow.png");
 
   public ScarecrowRenderer(EntityRendererProvider.Context ctx) {
@@ -32,17 +33,41 @@ public class ScarecrowRenderer extends LivingEntityRenderer<ScarecrowEntity, Sca
   }
 
   @Override
-  protected void scale(ScarecrowEntity entity, PoseStack matrices, float amount) {
+  public BirdRenderState createRenderState() {
+    return new BirdRenderState();
+  }
+
+  @Override
+  protected void extractRenderState(
+      ScarecrowEntity entity, BirdRenderState state, float partialTick) {
+    super.extractRenderState(entity, state, partialTick);
+    state.ageInTicks = entity.tickCount + partialTick;
+    state.headRotX = (float) (Math.PI / 180.0) * entity.getHeadRotation().getX();
+    state.headRotY = (float) (Math.PI / 180.0) * entity.getHeadRotation().getY();
+    state.headRotZ = (float) (Math.PI / 180.0) * entity.getHeadRotation().getZ();
+    state.bodyRotX = (float) (Math.PI / 180.0) * entity.getBodyRotation().getX();
+    state.bodyRotY = (float) (Math.PI / 180.0) * entity.getBodyRotation().getY();
+    state.bodyRotZ = (float) (Math.PI / 180.0) * entity.getBodyRotation().getZ();
+    state.leftArmRotX = (float) (Math.PI / 180.0) * entity.getLeftArmRotation().getX();
+    state.leftArmRotY = (float) (Math.PI / 180.0) * entity.getLeftArmRotation().getY();
+    state.leftArmRotZ = (float) (Math.PI / 180.0) * entity.getLeftArmRotation().getZ();
+    state.rightArmRotX = (float) (Math.PI / 180.0) * entity.getRightArmRotation().getX();
+    state.rightArmRotY = (float) (Math.PI / 180.0) * entity.getRightArmRotation().getY();
+    state.rightArmRotZ = (float) (Math.PI / 180.0) * entity.getRightArmRotation().getZ();
+  }
+
+  @Override
+  protected void scale(BirdRenderState state, PoseStack matrices, float amount) {
     matrices.scale(0.9375F, 0.9375F, 0.9375F);
   }
 
   @Override
-  protected boolean shouldShowName(ScarecrowEntity livingEntity) {
+  protected boolean shouldShowName(BirdRenderState state) {
     return false;
   }
 
   @Override
-  public Identifier getTextureLocation(ScarecrowEntity entity) {
+  public Identifier getTextureLocation(BirdRenderState state) {
     return TEXTURE;
   }
 }
