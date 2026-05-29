@@ -102,7 +102,7 @@ public class NaturalSpawnerMixin {
                                 double e = Mth.clamp(m, (double) j + f, j + 16.0 - f);
                                 if(!levelAccessor.noCollision(spawnerData.type.getSpawnAABB(d, blockPos.getY(), e))
                                     || !SpawnPlacements.checkSpawnRules(
-                                    spawnerData.type, levelAccessor, MobSpawnType.CHUNK_GENERATION, BlockPos.containing(d, blockPos.getY(), e), levelAccessor.getRandom()
+                                    spawnerData.type, levelAccessor, EntitySpawnReason.CHUNK_GENERATION, BlockPos.containing(d, blockPos.getY(), e), levelAccessor.getRandom()
                                 )) {
                                     continue;
                                 }
@@ -121,9 +121,9 @@ public class NaturalSpawnerMixin {
                                 }
 
                                 entity.moveTo(d, blockPos.getY(), e, random.nextFloat() * 360.0F, 0.0F);
-                                if(entity instanceof Mob mob && mob.checkSpawnRules(levelAccessor, MobSpawnType.CHUNK_GENERATION) && mob.checkSpawnObstruction(levelAccessor)) {
+                                if(entity instanceof Mob mob && mob.checkSpawnRules(levelAccessor, EntitySpawnReason.CHUNK_GENERATION) && mob.checkSpawnObstruction(levelAccessor)) {
                                     spawnGroupData = mob.finalizeSpawn(
-                                        levelAccessor, levelAccessor.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
+                                        levelAccessor, levelAccessor.getCurrentDifficultyAt(mob.blockPosition()), EntitySpawnReason.CHUNK_GENERATION, spawnGroupData
                                     );
                                     levelAccessor.addFreshEntityWithPassengers(mob);
                                     bl = true;

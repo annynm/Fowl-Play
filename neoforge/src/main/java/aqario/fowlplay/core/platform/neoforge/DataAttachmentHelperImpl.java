@@ -3,7 +3,7 @@ package aqario.fowlplay.core.platform.neoforge;
 import aqario.fowlplay.common.entity.variant.ChickenVariant;
 import aqario.fowlplay.core.neoforge.FowlPlayDataAttachments;
 import net.minecraft.core.Holder;
-import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.chicken.Chicken;
 
 public class DataAttachmentHelperImpl {
     public static Holder<ChickenVariant> getChickenVariant(Chicken entity) {

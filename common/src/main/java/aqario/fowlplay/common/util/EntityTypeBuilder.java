@@ -4,7 +4,7 @@ import aqario.fowlplay.common.worldgen.BiomeModifier;
 import com.google.common.collect.ImmutableSet;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.entity.*;

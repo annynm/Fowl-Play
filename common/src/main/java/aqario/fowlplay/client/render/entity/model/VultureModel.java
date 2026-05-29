@@ -1,7 +1,7 @@
 package aqario.fowlplay.client.render.entity.model;
 
+import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.HawkAnimations;
-import aqario.fowlplay.client.render.entity.state.BirdRenderState;
 import aqario.fowlplay.core.FowlPlay;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;

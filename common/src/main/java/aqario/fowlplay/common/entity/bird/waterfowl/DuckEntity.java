@@ -109,7 +109,7 @@ public class DuckEntity extends TrustingBirdEntity implements BirdBrain<DuckEnti
     public SpawnGroupData finalizeSpawn(
         ServerLevelAccessor level,
         DifficultyInstance difficulty,
-        MobSpawnType spawnType,
+        EntitySpawnReason spawnType,
         @Nullable SpawnGroupData spawnGroupData
     ) {
         this.withRandomVariant(level.getRandom(), this::setVariant);

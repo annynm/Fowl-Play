@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.layer.StuckArrowsLayer;
+import aqario.fowlplay.client.render.entity.StuckArrowsLayer;
 import aqario.fowlplay.client.render.entity.model.ScarecrowArmorModel;
 import aqario.fowlplay.client.render.entity.model.ScarecrowModel;
 import aqario.fowlplay.common.entity.ScarecrowEntity;
@@ -9,7 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
-import net.minecraft.client.renderer.entity.layers.ElytraLayer;
+import net.minecraft.client.renderer.entity.layers.WingsLayer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.resources.Identifier;
@@ -28,7 +28,7 @@ public class ScarecrowRenderer
             ctx.getModelManager()));
     this.addLayer(new StuckArrowsLayer<>(ctx, this));
     this.addLayer(new ItemInHandLayer<>(this, ctx.getItemInHandRenderer()));
-    this.addLayer(new ElytraLayer<>(this, ctx.getModelSet()));
+    this.addLayer(new WingsLayer<>(this, ctx.getModelSet()));
     this.addLayer(new CustomHeadLayer<>(this, ctx.getModelSet(), ctx.getItemInHandRenderer()));
   }
 

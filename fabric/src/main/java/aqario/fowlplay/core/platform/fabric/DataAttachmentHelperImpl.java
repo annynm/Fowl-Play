@@ -4,7 +4,7 @@ import aqario.fowlplay.common.entity.variant.ChickenVariant;
 import aqario.fowlplay.core.FPBuiltInRegistries;
 import aqario.fowlplay.core.fabric.FowlPlayDataAttachments;
 import net.minecraft.core.Holder;
-import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.chicken.Chicken;
 
 import java.util.Optional;
 

@@ -48,10 +48,16 @@ subprojects {
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-        // Use layered mappings for all subprojects – required for NeoForge genSources
         mappings loom.layered {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-${rootProject.parchment_mappings_version}@zip")
+        }
+    }
+
+    // Expose Minecraft client classes to :common compile classpath via access widener
+    if (project.name == "common") {
+        loom {
+            accessWidenerPath = file("src/main/resources/fowlplay.accesswidener")
         }
     }
 

@@ -117,7 +117,7 @@ public class GooseEntity extends TrustingBirdEntity implements BirdBrain<GooseEn
     public SpawnGroupData finalizeSpawn(
         ServerLevelAccessor level,
         DifficultyInstance difficulty,
-        MobSpawnType spawnType,
+        EntitySpawnReason spawnType,
         @Nullable SpawnGroupData spawnGroupData
     ) {
         this.withRandomVariant(level.getRandom(), this::setVariant);

@@ -136,7 +136,7 @@ public class PenguinEntity extends BirdEntity implements BirdBrain<PenguinEntity
     }
 
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnType, @Nullable SpawnGroupData spawnGroupData) {
         this.initLastPoseTick(level.getLevel().getGameTime());
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
@@ -492,7 +492,7 @@ public class PenguinEntity extends BirdEntity implements BirdBrain<PenguinEntity
     }
 
     @SuppressWarnings("unused")
-    public static boolean canSpawnPenguins(EntityType<? extends BirdEntity> type, LevelAccessor world, MobSpawnType spawnReason, BlockPos pos, RandomSource random) {
+    public static boolean canSpawnPenguins(EntityType<? extends BirdEntity> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
         return world.getBiome(pos).is(FowlPlayBiomeTags.SPAWNS_PENGUINS) && world.getBlockState(pos.below()).is(FowlPlayBlockTags.PENGUINS_SPAWNABLE_ON);
     }
 

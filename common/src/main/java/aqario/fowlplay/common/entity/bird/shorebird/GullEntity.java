@@ -28,7 +28,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -99,7 +99,7 @@ public class GullEntity extends TrustingBirdEntity implements BirdBrain<GullEnti
     public SpawnGroupData finalizeSpawn(
         ServerLevelAccessor level,
         DifficultyInstance difficulty,
-        MobSpawnType spawnType,
+        EntitySpawnReason spawnType,
         @Nullable SpawnGroupData spawnGroupData
     ) {
         this.withRandomVariant(level.getRandom(), this::setVariant);

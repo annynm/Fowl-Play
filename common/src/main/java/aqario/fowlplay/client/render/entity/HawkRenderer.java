@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.HawkModel;
 import aqario.fowlplay.common.entity.bird.raptor.HawkEntity;
 import aqario.fowlplay.core.FowlPlay;

@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public abstract class ChickenMixin extends Animal
   public SpawnGroupData finalizeSpawn(
       ServerLevelAccessor level,
       DifficultyInstance difficulty,
-      MobSpawnType spawnReason,
+      EntitySpawnReason spawnReason,
       @Nullable SpawnGroupData entityData) {
     FPBuiltInRegistries.CHICKEN_VARIANT
         .getHolder(ChickenVariant.RED_JUNGLEFOWL)

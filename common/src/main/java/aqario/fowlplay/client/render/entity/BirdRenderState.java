@@ -1,7 +1,7 @@
 package aqario.fowlplay.client.render.entity;
 
 import aqario.fowlplay.common.entity.variant.GooseVariant;
-import net.minecraft.client.renderer.entity.LivingEntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.AnimationState;
 
