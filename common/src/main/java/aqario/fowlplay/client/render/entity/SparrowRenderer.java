@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.SparrowModel;
 import aqario.fowlplay.common.entity.bird.passerine.SparrowEntity;
 import aqario.fowlplay.core.FowlPlay;
@@ -18,7 +18,7 @@ public class SparrowRenderer extends MobRenderer<SparrowEntity, BirdRenderState,
     super(context, new SparrowModel(context.bakeLayer(SparrowModel.MODEL_LAYER)), 0.15f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.085, -0.1475)));
+            this, net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(), new Vec3(0.0, -0.085, -0.1475)));
   }
 
   @Override
@@ -27,7 +27,7 @@ public class SparrowRenderer extends MobRenderer<SparrowEntity, BirdRenderState,
   }
 
   @Override
-  protected void extractRenderState(
+  public void extractRenderState(
       SparrowEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
@@ -37,7 +37,7 @@ public class SparrowRenderer extends MobRenderer<SparrowEntity, BirdRenderState,
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     state.isFlying = entity.isFlying();
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
     state.viewXRot = entity.getViewXRot(partialTick);

@@ -19,7 +19,7 @@ public interface Domesticatable {
     }
 
     default void readClipped(CompoundTag nbt) {
-        this.setClippedWings(nbt.getBoolean(CLIPPED_KEY));
+        this.setClippedWings(nbt.getBoolean(CLIPPED_KEY).orElse(false));
     }
 
     default void writeDomestic(CompoundTag nbt) {
@@ -27,6 +27,6 @@ public interface Domesticatable {
     }
 
     default void readDomestic(CompoundTag nbt) {
-        this.setDomestic(nbt.getBoolean(DOMESTIC_KEY));
+        this.setDomestic(nbt.getBoolean(DOMESTIC_KEY).orElse(false));
     }
 }

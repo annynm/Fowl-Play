@@ -3,7 +3,9 @@ package aqario.fowlplay.common.worldgen;
 import aqario.fowlplay.common.config.FowlPlayConfig;
 import aqario.fowlplay.common.entity.bird.dove.PigeonEntity;
 import aqario.fowlplay.core.FPEntityTypes;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gamerule.GameRules;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -11,70 +13,66 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.CustomSpawner;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 
-import java.util.List;
-
 public class PigeonSpawner implements CustomSpawner {
-    private static final int SPAWN_COOLDOWN = 3600;
-    private static final int MAX_PIGEONS = 6;
-    private int ticksUntilNextSpawn;
+  private static final int SPAWN_COOLDOWN = 3600;
+  private static final int MAX_PIGEONS = 6;
+  private int ticksUntilNextSpawn;
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public int tick(ServerLevel world, boolean spawnMonsters, boolean spawnAnimals) {
-        if (!spawnAnimals
-            || !world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
-            || FowlPlayConfig.getInstance().pigeonSpawnWeight <= 0
-        ) {
-            return 0;
-        }
-        this.ticksUntilNextSpawn--;
-        if (this.ticksUntilNextSpawn > 0) {
-            return 0;
-        }
-        this.ticksUntilNextSpawn = SPAWN_COOLDOWN;
-        Player player = world.getRandomPlayer();
-        if (player == null) {
-            return 0;
-        }
-        RandomSource random = world.random;
-        int x = (8 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
-        int z = (8 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
-        BlockPos pos = player.blockPosition().offset(x, 0, z);
-        if (!world.hasChunksAt(pos.getX() - 10, pos.getZ() - 10, pos.getX() + 10, pos.getZ() + 10)) {
-            return 0;
-        }
-        if (world.isCloseToVillage(pos, 2)) {
-            return this.spawnNearPoi(world, pos);
-        }
-
-        return 0;
+  @Override
+  public void tick(ServerLevel world) {
+    if (!world.getGameRules().get(GameRules.SPAWN_MOBS)
+        || FowlPlayConfig.getInstance().pigeonSpawnWeight <= 0) {
+      return;
     }
-
-    private int spawnNearPoi(ServerLevel world, BlockPos pos) {
-        if (world.getPoiManager()
-            .getCountInRange(holder -> holder.is(PoiTypes.HOME), pos, 48, PoiManager.Occupancy.IS_OCCUPIED)
-            > 4L) {
-            List<PigeonEntity> nearbyPigeons = world.getEntitiesOfClass(PigeonEntity.class, new AABB(pos).inflate(48.0, 8.0, 48.0));
-            if (nearbyPigeons.size() < MAX_PIGEONS
-                && world.canSeeSky(pos)) {
-                return this.spawn(pos, world);
-            }
-        }
-
-        return 0;
+    this.ticksUntilNextSpawn--;
+    if (this.ticksUntilNextSpawn > 0) {
+      return;
     }
-
-    private int spawn(BlockPos pos, ServerLevel world) {
-        PigeonEntity pigeon = FPEntityTypes.PIGEON.get().create(world);
-        if (pigeon == null) {
-            return 0;
-        }
-        pigeon.finalizeSpawn(world, world.getCurrentDifficultyAt(pos), EntitySpawnReason.NATURAL, null);
-        pigeon.moveTo(pos, 0.0F, 0.0F);
-        world.addFreshEntityWithPassengers(pigeon);
-        return 1;
+    this.ticksUntilNextSpawn = SPAWN_COOLDOWN;
+    Player player = world.getRandomPlayer();
+    if (player == null) {
+      return;
     }
+    RandomSource random = world.random;
+    int x = (8 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
+    int z = (8 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
+    BlockPos pos = player.blockPosition().offset(x, 0, z);
+    if (!world.hasChunksAt(pos.getX() - 10, pos.getZ() - 10, pos.getX() + 10, pos.getZ() + 10)) {
+      return;
+    }
+    if (world.isCloseToVillage(pos, 2)) {
+      this.spawnNearPoi(world, pos);
+    }
+  }
+
+  private void spawnNearPoi(ServerLevel world, BlockPos pos) {
+    if (world
+            .getPoiManager()
+            .getCountInRange(
+                holder -> holder.is(PoiTypes.HOME), pos, 48, PoiManager.Occupancy.IS_OCCUPIED)
+        > 4L) {
+      List<PigeonEntity> nearbyPigeons =
+          world.getEntitiesOfClass(PigeonEntity.class, new AABB(pos).inflate(48.0, 8.0, 48.0));
+      if (nearbyPigeons.size() < MAX_PIGEONS && world.canSeeSky(pos)) {
+        this.spawn(pos, world);
+      }
+    }
+  }
+
+  private void spawn(BlockPos pos, ServerLevel world) {
+    PigeonEntity pigeon =
+        FPEntityTypes.PIGEON
+            .get()
+            .create(world, net.minecraft.world.entity.EntitySpawnReason.NATURAL);
+    if (pigeon == null) {
+      return;
+    }
+    pigeon.finalizeSpawn(world, world.getCurrentDifficultyAt(pos), EntitySpawnReason.NATURAL, null);
+    pigeon.setPos(pos.getX(), pos.getY(), pos.getZ());
+    pigeon.setYRot(0.0F);
+    pigeon.setXRot(0.0F);
+    world.addFreshEntityWithPassengers(pigeon);
+  }
 }

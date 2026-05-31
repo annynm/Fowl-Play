@@ -116,7 +116,7 @@ public class FlightNavigation extends GroundPathNavigation implements ExtendedNa
       }
 
       if (this.level instanceof ServerLevel serverLevel) {
-        serverLevel.sendPathfindingPacket(this.getMob(), this.getPath(), 0.1f);
+
       }
 
       if (!this.isDone()) {

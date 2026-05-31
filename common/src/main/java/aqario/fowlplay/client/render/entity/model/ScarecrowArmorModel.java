@@ -51,24 +51,18 @@ public class ScarecrowArmorModel extends HumanoidModel<BirdRenderState> {
 
   @Override
   public void setupAnim(BirdRenderState state) {
-    // TODO: Add scarecrow rotation fields to BirdRenderState (or create ScarecrowRenderState):
-    //   state.headRotX, state.headRotY, state.headRotZ
-    //   state.bodyRotX, state.bodyRotY, state.bodyRotZ
-    //   state.leftArmRotX, state.leftArmRotY, state.leftArmRotZ
-    //   state.rightArmRotX, state.rightArmRotY, state.rightArmRotZ
-    // Then replace the placeholder values below:
-    this.head.xRot = 0; // state.headRotX
-    this.head.yRot = 0; // state.headRotY
-    this.head.zRot = 0; // state.headRotZ
-    this.body.xRot = 0; // state.bodyRotX
-    this.body.yRot = 0; // state.bodyRotY
-    this.body.zRot = 0; // state.bodyRotZ
-    this.leftArm.xRot = 0; // state.leftArmRotX
-    this.leftArm.yRot = 0; // state.leftArmRotY
-    this.leftArm.zRot = 0; // state.leftArmRotZ
-    this.rightArm.xRot = 0; // state.rightArmRotX
-    this.rightArm.yRot = 0; // state.rightArmRotY
-    this.rightArm.zRot = 0; // state.rightArmRotZ
+    this.head.xRot = state.headRotX;
+    this.head.yRot = state.headRotY;
+    this.head.zRot = state.headRotZ;
+    this.body.xRot = state.bodyRotX;
+    this.body.yRot = state.bodyRotY;
+    this.body.zRot = state.bodyRotZ;
+    this.leftArm.xRot = state.leftArmRotX;
+    this.leftArm.yRot = state.leftArmRotY;
+    this.leftArm.zRot = state.leftArmRotZ;
+    this.rightArm.xRot = state.rightArmRotX;
+    this.rightArm.yRot = state.rightArmRotY;
+    this.rightArm.zRot = state.rightArmRotZ;
     this.leftLeg.xRot = 0;
     this.leftLeg.yRot = 0;
     this.leftLeg.zRot = 0;

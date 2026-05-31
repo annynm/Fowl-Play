@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.RobinAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,21 @@ public class RobinModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("robin"), "main");
 
+  // Baked animations
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+  private final KeyframeAnimation flappingAnim;
+
   public RobinModel(ModelPart root) {
     super(root);
+    // Bake animations in constructor (1.21.11 pattern)
+    this.walkingAnim = RobinAnimations.WALKING.bake(root);
+    this.standingAnim = RobinAnimations.STANDING.bake(root);
+    this.swimmingAnim = RobinAnimations.SWIMMING.bake(root);
+    this.glidingAnim = RobinAnimations.GLIDING.bake(root);
+    this.flappingAnim = RobinAnimations.FLAPPING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -151,12 +165,14 @@ public class RobinModel extends FlyingBirdModel<BirdRenderState> {
 
   @Override
   protected void setAnimations(BirdRenderState state) {
+    // Replaced animateWalk() with applyWalk() on baked KeyframeAnimation
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(RobinAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 6F, 6F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 6F, 6F);
     }
-    this.animate(state.standingState, RobinAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, RobinAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, RobinAnimations.GLIDING, state.ageInTicks);
-    this.animate(state.flappingState, RobinAnimations.FLAPPING, state.ageInTicks);
+    // Replaced animate() with apply()
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
+    this.flappingAnim.apply(state.flappingState, state.ageInTicks);
   }
 }

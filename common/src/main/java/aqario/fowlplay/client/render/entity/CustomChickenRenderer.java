@@ -8,7 +8,6 @@ import aqario.fowlplay.common.entity.variant.ChickenVariant;
 import aqario.fowlplay.common.util.ChickenAnimationHolder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.Identifier;
@@ -34,7 +33,7 @@ public class CustomChickenRenderer
 
   @SuppressWarnings("unchecked")
   @Override
-  protected void extractRenderState(Chicken entity, BirdRenderState state, float partialTick) {
+  public void extractRenderState(Chicken entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
     state.limbSwing = entity.walkAnimation.position();
@@ -42,7 +41,7 @@ public class CustomChickenRenderer
     state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.customName = ChatFormatting.stripFormatting(entity.getName().getString());
     state.variantTexture =
@@ -53,20 +52,15 @@ public class CustomChickenRenderer
     state.chickenFloatingState.copyFrom(holder.fowlplay$getFloatingState());
   }
 
+  // REMOVED: render() method override - no longer exists in 1.21.11
+  // Rendering is now handled by the framework via submit() and extractRenderState()
+  // The model is set automatically from the model field; scaling logic moved to scale() if needed
+
   @Override
-  public void render(
-      BirdRenderState state,
-      PoseStack matrices,
-      MultiBufferSource vertexConsumerProvider,
-      int packedLight) {
-    this.model = this.modelPair.getModel(state.isBaby);
+  protected void scale(BirdRenderState state, PoseStack matrices, float amount) {
+    // Scale for baby chickens - previously done in render() override
     if (state.isBaby) {
-      matrices.pushPose();
       matrices.scale(0.8F, 0.8F, 0.8F);
-      super.render(state, matrices, vertexConsumerProvider, packedLight);
-      matrices.popPose();
-    } else {
-      super.render(state, matrices, vertexConsumerProvider, packedLight);
     }
   }
 

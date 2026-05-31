@@ -16,6 +16,8 @@ import aqario.fowlplay.core.FPSoundEvents;
 import aqario.fowlplay.core.tags.FowlPlayEntityTypeTags;
 import aqario.fowlplay.core.tags.FowlPlayItemTags;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import java.util.List;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AnimationState;
@@ -36,256 +38,225 @@ import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyLivingEntitySensor;
 import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyPlayersSensor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class SparrowEntity extends FlyingBirdEntity implements BirdBrain<SparrowEntity>, Flocking {
-    public final AnimationState scratchingState = new AnimationState();
-    public final AnimationState preeningState = new AnimationState();
-    private static final int FLAP_FREQUENCY = 1;
-    private static final int FLAP_DURATION = 8;
-    private int timeSinceLastFlap = FLAP_FREQUENCY;
-    private int flapTime = 0;
+  public final AnimationState scratchingState = new AnimationState();
+  public final AnimationState preeningState = new AnimationState();
+  private static final int FLAP_FREQUENCY = 1;
+  private static final int FLAP_DURATION = 8;
+  private int timeSinceLastFlap = FLAP_FREQUENCY;
+  private int flapTime = 0;
 
-    public SparrowEntity(EntityType<? extends SparrowEntity> entityType, Level world) {
-        super(entityType, world);
-    }
+  public SparrowEntity(EntityType<? extends SparrowEntity> entityType, Level world) {
+    super(entityType, world);
+  }
 
-    @Override
-    public boolean isBaby() {
-        return false;
-    }
+  @Override
+  public boolean isBaby() {
+    return false;
+  }
 
-    @Override
-    public Ingredient getFood() {
-        return Ingredient.of(FowlPlayItemTags.SPARROW_FOOD);
-    }
+  @Override
+  public Ingredient getFood() {
+    return Ingredient.of(net.minecraft.core.registries.BuiltInRegistries.ITEM.getOrThrow(FowlPlayItemTags.SPARROW_FOOD));
+  }
 
-    @Override
-    public boolean shouldAvoid(LivingEntity entity) {
-        return entity.getType().is(FowlPlayEntityTypeTags.SPARROW_AVOIDS);
-    }
+  @Override
+  public boolean shouldAvoid(LivingEntity entity) {
+    return entity.getType().is(FowlPlayEntityTypeTags.SPARROW_AVOIDS);
+  }
 
-    @Override
-    public void tick() {
-        super.tick();
-    }
+  @Override
+  public void tick() {
+    super.tick();
+  }
 
-    @Override
-    protected AnimationStateList createIdleAnimations() {
-        return new AnimationStateList()
-            .with(this.scratchingState, 1)
-            .with(this.preeningState, 3);
-    }
+  @Override
+  protected AnimationStateList createIdleAnimations() {
+    return new AnimationStateList().with(this.scratchingState, 1).with(this.preeningState, 3);
+  }
 
-    @Override
-    protected void updateAnimationStates() {
-        // on land
-        if(!this.isFlying() && !this.isInWaterOrBubble()) {
-            if(this.random.nextInt(1000) < this.idleAnimationChance++ && !this.isMoving()) {
-                this.resetIdleAnimationDelay();
-                this.standingState.stop();
-                this.preeningState.stop();
-                this.scratchingState.stop();
-                if(this.getRandom().nextFloat() < 0.75f) {
-                    this.preeningState.start(this.tickCount);
-                }
-                else {
-                    this.scratchingState.start(this.tickCount);
-                }
-            }
-            else if(this.isMoving()) {
-                this.preeningState.stop();
-                this.scratchingState.stop();
-            }
-            if(!(this.preeningState.isStarted() || this.scratchingState.isStarted())) {
-                this.standingState.startIfStopped(this.tickCount);
-            }
-            else {
-                this.standingState.stop();
-            }
+  @Override
+  protected void updateAnimationStates() {
+    // on land
+    if (!this.isFlying() && !this.isInWater()) {
+      if (this.random.nextInt(1000) < this.idleAnimationChance++ && !this.isMoving()) {
+        this.resetIdleAnimationDelay();
+        this.standingState.stop();
+        this.preeningState.stop();
+        this.scratchingState.stop();
+        if (this.getRandom().nextFloat() < 0.75f) {
+          this.preeningState.start(this.tickCount);
+        } else {
+          this.scratchingState.start(this.tickCount);
         }
-        else {
-            this.standingState.stop();
-            this.preeningState.stop();
-            this.scratchingState.stop();
-        }
-        // flying
-        if(this.isFlying()) {
-            if(this.timeSinceLastFlap >= FLAP_FREQUENCY) {
-                this.timeSinceLastFlap = 0;
-                this.flapTime++;
-            }
-            else if(this.isAnimatingFlapping()) {
-                this.flapTime++;
-                this.glidingState.stop();
-                this.flappingState.startIfStopped(this.tickCount);
-            }
-            else {
-                this.timeSinceLastFlap++;
-                this.flapTime = 0;
-                this.flappingState.stop();
-                this.glidingState.startIfStopped(this.tickCount);
-            }
-        }
-        else {
-            this.timeSinceLastFlap = FLAP_FREQUENCY;
-            this.flapTime = 0;
-            this.flappingState.stop();
-            this.glidingState.stop();
-        }
-        // in water
-        this.swimmingState.animateWhen(!this.isFlying() && this.isInWaterOrBubble(), this.tickCount);
+      } else if (this.isMoving()) {
+        this.preeningState.stop();
+        this.scratchingState.stop();
+      }
+      if (!(this.preeningState.isStarted() || this.scratchingState.isStarted())) {
+        this.standingState.startIfStopped(this.tickCount);
+      } else {
+        this.standingState.stop();
+      }
+    } else {
+      this.standingState.stop();
+      this.preeningState.stop();
+      this.scratchingState.stop();
     }
+    // flying
+    if (this.isFlying()) {
+      if (this.timeSinceLastFlap >= FLAP_FREQUENCY) {
+        this.timeSinceLastFlap = 0;
+        this.flapTime++;
+      } else if (this.isAnimatingFlapping()) {
+        this.flapTime++;
+        this.glidingState.stop();
+        this.flappingState.startIfStopped(this.tickCount);
+      } else {
+        this.timeSinceLastFlap++;
+        this.flapTime = 0;
+        this.flappingState.stop();
+        this.glidingState.startIfStopped(this.tickCount);
+      }
+    } else {
+      this.timeSinceLastFlap = FLAP_FREQUENCY;
+      this.flapTime = 0;
+      this.flappingState.stop();
+      this.glidingState.stop();
+    }
+    // in water
+    this.swimmingState.animateWhen(!this.isFlying() && this.isInWater(), this.tickCount);
+  }
 
-    private boolean isAnimatingFlapping() {
-        return this.flapTime >= 0 && this.flapTime < FLAP_DURATION;
-    }
+  private boolean isAnimatingFlapping() {
+    return this.flapTime >= 0 && this.flapTime < FLAP_DURATION;
+  }
 
-    @Override
-    protected boolean isFlapping() {
-        return this.isFlying() && this.isAnimatingFlapping();
-    }
+  @Override
+  protected boolean isFlapping() {
+    return this.isFlying() && this.isAnimatingFlapping();
+  }
 
-    @Override
-    protected int getIdleAnimationDelay() {
-        return 400;
-    }
+  @Override
+  protected int getIdleAnimationDelay() {
+    return 400;
+  }
 
-    @Override
-    public float getFlapVolume() {
-        return 0.5f;
-    }
+  @Override
+  public float getFlapVolume() {
+    return 0.5f;
+  }
 
-    @Override
-    public float getFlapPitch() {
-        return 1.0f;
-    }
+  @Override
+  public float getFlapPitch() {
+    return 1.0f;
+  }
 
-    @Override
-    public Vec3 getLeashOffset() {
-        return new Vec3(0.0, 0.5f * this.getEyeHeight(), this.getBbWidth() * 0.4f);
-    }
+  @Override
+  public Vec3 getLeashOffset() {
+    return new Vec3(0.0, 0.5f * this.getEyeHeight(), this.getBbWidth() * 0.4f);
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getCallSound() {
-        return FPSoundEvents.SPARROW_CALL.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getCallSound() {
+    return FPSoundEvents.SPARROW_CALL.get();
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getSongSound() {
-        return FPSoundEvents.SPARROW_SONG.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getSongSound() {
+    return FPSoundEvents.SPARROW_SONG.get();
+  }
 
-    @Override
-    public int getCallDelay() {
-        return 120;
-    }
+  @Override
+  public int getCallDelay() {
+    return 120;
+  }
 
-    @Override
-    public int getSongDelay() {
-        return 360;
-    }
+  @Override
+  public int getSongDelay() {
+    return 360;
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return FPSoundEvents.SPARROW_HURT.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getHurtSound(DamageSource source) {
+    return FPSoundEvents.SPARROW_HURT.get();
+  }
 
-    @Override
-    protected Brain.Provider<SparrowEntity> brainProvider() {
-        return new ExtendedBrainProvider<>(this);
-    }
+  @Override
+  protected Brain.Provider<SparrowEntity> brainProvider() {
+    return new ExtendedBrainProvider<>(this);
+  }
 
-    @Override
-    public List<? extends ExtendedSensor<? extends SparrowEntity>> getSensors() {
-        return ObjectArrayList.of(
-            new NearbyLivingEntitySensor<>(),
-            new NearbyPlayersSensor<>(),
-            new NearbyFoodSensor<>(),
-            new NearbyAdultsSensor<>(),
-            new InWaterSensor<>(),
-            new AttackedSensor<>(),
-            new AvoidTargetSensor<>()
-        );
-    }
+  @Override
+  public List<? extends ExtendedSensor<? extends SparrowEntity>> getSensors() {
+    return ObjectArrayList.of(
+        new NearbyLivingEntitySensor<>(),
+        new NearbyPlayersSensor<>(),
+        new NearbyFoodSensor<>(),
+        new NearbyAdultsSensor<>(),
+        new InWaterSensor<>(),
+        new AttackedSensor<>(),
+        new AvoidTargetSensor<>());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends SparrowEntity> coreActivity() {
-        return BirdBrain.core(
-            new WakeUp<>(),
-            new FloatToSurfaceOfFluid<>(),
-            FlightBehaviours.stopFalling(),
-            SetEntityLookTarget.create(BirdUtils::isPlayerHoldingFood),
-            new LookAtTarget<>()
-                .runForBetween(45, 90),
-            new MoveToWalkTarget<>()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends SparrowEntity> coreActivity() {
+    return BirdBrain.core(
+        new WakeUp<>(),
+        new FloatToSurfaceOfFluid<>(),
+        FlightBehaviours.stopFalling(),
+        SetEntityLookTarget.create(BirdUtils::isPlayerHoldingFood),
+        new LookAtTarget<>().runForBetween(45, 90),
+        new MoveToWalkTarget<>());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends SparrowEntity> avoidActivity() {
-        return BirdBrain.avoid(
-            CustomBehaviours.setAvoidEntityWalkTarget()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends SparrowEntity> avoidActivity() {
+    return BirdBrain.avoid(CustomBehaviours.setAvoidEntityWalkTarget());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends SparrowEntity> forageActivity() {
-        return BirdBrain.forage(
-            CompositeBehaviours.forage()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends SparrowEntity> forageActivity() {
+    return BirdBrain.forage(CompositeBehaviours.forage());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends SparrowEntity> idleActivity() {
-        return BirdBrain.idle(
-            new LeaderlessFlocking(
-                3,
-                0.03f,
-                0.6f,
-                0.05f,
-                3f
-            ),
-            CompositeBehaviours.perch()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends SparrowEntity> idleActivity() {
+    return BirdBrain.idle(
+        new LeaderlessFlocking(3, 0.03f, 0.6f, 0.05f, 3f), CompositeBehaviours.perch());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends SparrowEntity> pickUpActivity() {
-        return BirdBrain.pickUp(
-            CompositeBehaviours.tryPickUpFood()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends SparrowEntity> pickUpActivity() {
+    return BirdBrain.pickUp(CompositeBehaviours.tryPickUpFood());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends SparrowEntity> restActivity() {
-        return BirdBrain.rest(
-            CompositeBehaviours.trySetPerchRestTarget(),
-            CustomBehaviours.sleepIfPerched()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends SparrowEntity> restActivity() {
+    return BirdBrain.rest(
+        CompositeBehaviours.trySetPerchRestTarget(), CustomBehaviours.sleepIfPerched());
+  }
 
-    @Nullable
-    @Override
-    public SmartBrainSchedule getSchedule() {
-        return FPSchedules.FORAGER.get();
-    }
+  @Nullable
+  @Override
+  public SmartBrainSchedule getSchedule() {
+    return FPSchedules.FORAGER.get();
+  }
 
-    @Override
-    protected void customServerAiStep() {
-        this.tickBrain(this);
-        super.customServerAiStep();
-    }
+  @Override
+  protected void customServerAiStep(net.minecraft.server.level.ServerLevel level) {
+    this.tickBrain(this);
+    super.customServerAiStep((ServerLevel) this.level());
+  }
 
-    @Override
-    public boolean isLeader() {
-        return false;
-    }
+  @Override
+  public boolean isLeader() {
+    return false;
+  }
 
-    @Override
-    public void setLeader() {
-    }
+  @Override
+  public void setLeader() {}
 }

@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.ChickenAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -13,6 +14,7 @@ import net.minecraft.util.Mth;
 public class CustomChickenModel extends EntityModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("chicken"), "main");
+
   public final ModelPart root;
   public final ModelPart body;
   public final ModelPart head;
@@ -25,7 +27,14 @@ public class CustomChickenModel extends EntityModel<BirdRenderState> {
   public final ModelPart rightLeg;
   public final ModelPart tail;
 
+  // Baked animations (1.21.11 pattern)
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation flappingAnim;
+  private final KeyframeAnimation swimmingAnim;
+
   public CustomChickenModel(ModelPart root) {
+    super(root); // MUST pass root to super (fixed: no-arg constructor removed in 1.21.11)
     this.root = root.getChild("root");
     this.body = this.root.getChild("body");
     this.head = this.body.getChild("head");
@@ -37,6 +46,12 @@ public class CustomChickenModel extends EntityModel<BirdRenderState> {
     this.leftLeg = this.root.getChild("left_leg");
     this.rightLeg = this.root.getChild("right_leg");
     this.tail = this.body.getChild("tail");
+
+    // Bake animations
+    this.walkingAnim = ChickenAnimations.WALKING.bake(this.root);
+    this.standingAnim = ChickenAnimations.STANDING.bake(this.root);
+    this.flappingAnim = ChickenAnimations.FLAPPING.bake(this.root);
+    this.swimmingAnim = ChickenAnimations.SWIMMING.bake(this.root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -173,7 +188,8 @@ public class CustomChickenModel extends EntityModel<BirdRenderState> {
 
   @Override
   public void setupAnim(BirdRenderState state) {
-    this.root().getAllParts().forEach(ModelPart::resetPose);
+    // root() is now final - no override; access root field directly
+    this.root.getAllParts().forEach(ModelPart::resetPose);
     this.updateHeadRotation(state.headYaw, state.headPitch);
 
     // Wing visibility based on ground/water state
@@ -189,18 +205,17 @@ public class CustomChickenModel extends EntityModel<BirdRenderState> {
       this.rightWing.visible = false;
     }
 
+    // Replace animateWalk() with applyWalk()
     if (state.onGround && !state.isInWaterOrBubble) {
-      this.animateWalk(ChickenAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 3F, 3F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 3F, 3F);
     }
-    this.animate(state.chickenStandingState, ChickenAnimations.STANDING, state.ageInTicks);
-    this.animate(state.chickenFlappingState, ChickenAnimations.FLAPPING, state.ageInTicks);
-    this.animate(state.chickenFloatingState, ChickenAnimations.SWIMMING, state.ageInTicks);
+    // Replace animate() with apply()
+    this.standingAnim.apply(state.chickenStandingState, state.ageInTicks);
+    this.flappingAnim.apply(state.chickenFlappingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.chickenFloatingState, state.ageInTicks);
   }
 
-  @Override
-  public ModelPart root() {
-    return this.root;
-  }
+  // root() override REMOVED (method is final in 1.21.11)
 
   protected void updateHeadRotation(float headYaw, float headPitch) {
     headYaw = Mth.clamp(headYaw, -135.0F, 135.0F);

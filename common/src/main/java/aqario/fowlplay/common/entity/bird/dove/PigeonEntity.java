@@ -17,7 +17,6 @@ import aqario.fowlplay.core.tags.FowlPlayItemTags;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -27,6 +26,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
@@ -61,10 +61,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class PigeonEntity extends TameableBirdEntity
     implements BirdBrain<PigeonEntity>, VariantHolder<PigeonVariant>, Flocking {
-  private static final EntityDataAccessor<Optional<UUID>> RECIPIENT =
-      SynchedEntityData.defineId(PigeonEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+  private static final EntityDataAccessor<String> RECIPIENT =
+      SynchedEntityData.defineId(PigeonEntity.class, EntityDataSerializers.STRING);
   private static final EntityDataAccessor<Holder<PigeonVariant>> VARIANT =
       SynchedEntityData.defineId(PigeonEntity.class, FPEntityDataSerializers.PIGEON_VARIANT);
+  private static final EntityDataAccessor<Boolean> FLYING =
+      SynchedEntityData.defineId(PigeonEntity.class, EntityDataSerializers.BOOLEAN);
+  private static final EntityDataAccessor<Boolean> SITTING =
+      SynchedEntityData.defineId(PigeonEntity.class, EntityDataSerializers.BOOLEAN);
   public final AnimationState sittingState = new AnimationState();
   private static final String RECIPIENT_KEY = "recipient";
 
@@ -79,17 +83,11 @@ public class PigeonEntity extends TameableBirdEntity
       EntitySpawnReason spawnType,
       @Nullable SpawnGroupData spawnGroupData) {
     float f = level.getRandom().nextFloat();
-    if (f < 0.5f) { // 50% chance for banded
-      this.toHolder(PigeonVariant.BANDED).ifPresent(this::setVariant);
-    } else if (f < 0.75f) { // 25% chance for checkered
-      this.toHolder(PigeonVariant.CHECKERED).ifPresent(this::setVariant);
-    } else if (f < 0.95f) { // 20% chance for gray
-      this.toHolder(PigeonVariant.GRAY).ifPresent(this::setVariant);
-    } else if (f < 0.99f) { // 4% chance for rusty
-      this.toHolder(PigeonVariant.RUSTY).ifPresent(this::setVariant);
-    } else { // 1% chance for white
-      this.toHolder(PigeonVariant.WHITE).ifPresent(this::setVariant);
-    }
+    if (f < 0.5f) this.toHolder(PigeonVariant.BANDED).ifPresent(this::setVariant);
+    else if (f < 0.75f) this.toHolder(PigeonVariant.CHECKERED).ifPresent(this::setVariant);
+    else if (f < 0.95f) this.toHolder(PigeonVariant.GRAY).ifPresent(this::setVariant);
+    else if (f < 0.99f) this.toHolder(PigeonVariant.RUSTY).ifPresent(this::setVariant);
+    else this.toHolder(PigeonVariant.WHITE).ifPresent(this::setVariant);
     return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
   }
 
@@ -102,7 +100,9 @@ public class PigeonEntity extends TameableBirdEntity
   @Override
   protected void defineSynchedData(SynchedEntityData.Builder builder) {
     super.defineSynchedData(builder);
-    builder.define(RECIPIENT, Optional.empty());
+    builder.define(RECIPIENT, "");
+    builder.define(FLYING, false);
+    builder.define(SITTING, false);
     this.defineVariant(builder, VARIANT);
   }
 
@@ -132,24 +132,28 @@ public class PigeonEntity extends TameableBirdEntity
   }
 
   @Override
-  public void addAdditionalSaveData(CompoundTag nbt) {
-    super.addAdditionalSaveData(nbt);
+  public void saveCustomDataToTag(
+      CompoundTag nbt, net.minecraft.core.RegistryAccess registryAccess) {
     this.writeVariant(nbt);
-    if (this.getRecipientUuid() != null) {
-      nbt.putUUID(RECIPIENT_KEY, this.getRecipientUuid());
-    }
+    String recipient = this.entityData.get(RECIPIENT);
+    if (!recipient.isEmpty()) nbt.putString(RECIPIENT_KEY, recipient);
+    nbt.putBoolean("Flying", this.isFlying());
+    nbt.putBoolean("Sitting", this.isSitting());
   }
 
   @Override
-  public void readAdditionalSaveData(CompoundTag nbt) {
-    super.readAdditionalSaveData(nbt);
+  public void loadCustomDataFromTag(
+      CompoundTag nbt, net.minecraft.core.RegistryAccess registryAccess) {
     this.readVariant(nbt);
-
-    if (nbt.hasUUID(RECIPIENT_KEY)) {
-      this.setRecipientUuid(nbt.getUUID(RECIPIENT_KEY));
+    // Unwrap Optional<String>
+    if (nbt.contains(RECIPIENT_KEY)) {
+      this.entityData.set(RECIPIENT, nbt.getString(RECIPIENT_KEY).orElse(""));
     } else {
-      this.setRecipientUuid(null);
+      this.entityData.set(RECIPIENT, "");
     }
+    // Unwrap Optional<Boolean>
+    if (nbt.contains("Flying")) this.setFlying(nbt.getBoolean("Flying").orElse(false));
+    if (nbt.contains("Sitting")) this.setSitting(nbt.getBoolean("Sitting").orElse(false));
   }
 
   @Override
@@ -173,7 +177,6 @@ public class PigeonEntity extends TameableBirdEntity
   protected PathNavigation getLandNavigation() {
     GroundNavigation navigation = new GroundNavigation(this, this.level());
     navigation.setCanOpenDoors(false);
-    navigation.setCanPassDoors(true);
     navigation.setCanFloat(false);
     return navigation;
   }
@@ -182,31 +185,25 @@ public class PigeonEntity extends TameableBirdEntity
   public InteractionResult mobInteract(Player player, InteractionHand hand) {
     ItemStack playerStack = player.getItemInHand(hand);
     ItemStack bundleStack = this.getItemInHand(InteractionHand.OFF_HAND);
-
-    // Equip bundle
     if (bundleStack.isEmpty()
         && playerStack.getItem() instanceof BundleItem
         && playerStack.getComponents().has(DataComponents.CUSTOM_NAME)
         && this.isTamed()) {
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide()) {
         this.setItemInHand(InteractionHand.OFF_HAND, playerStack);
         player.setItemInHand(hand, ItemStack.EMPTY);
       }
-      return InteractionResult.sidedSuccess(this.level().isClientSide);
+      return InteractionResult.SUCCESS;
     }
-
-    // Unequip bundle
     if (playerStack.isEmpty() && bundleStack.getItem() instanceof BundleItem) {
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide()) {
         player.setItemInHand(hand, bundleStack);
         this.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
       }
-      return InteractionResult.sidedSuccess(this.level().isClientSide);
+      return InteractionResult.SUCCESS;
     }
-
-    // Taming
     if (this.isFood(playerStack) && !this.isTamed()) {
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide()) {
         this.usePlayerItem(player, hand, playerStack);
         if (this.random.nextInt(4) == 0) {
           this.setOwner(player);
@@ -216,21 +213,17 @@ public class PigeonEntity extends TameableBirdEntity
           this.level().broadcastEntityEvent(this, EntityEvent.TAMING_FAILED);
         }
       }
-      return InteractionResult.sidedSuccess(this.level().isClientSide);
+      return InteractionResult.SUCCESS;
     }
-
-    // Sitting
     if (this.onGround() && this.isTamed() && this.isOwner(player)) {
-      if (!this.level().isClientSide) {
+      if (!this.level().isClientSide()) {
         this.setSitting(!this.isSitting());
         this.jumping = false;
         this.navigation.stop();
         this.setTarget(null);
       }
-
-      return InteractionResult.sidedSuccess(this.level().isClientSide);
+      return InteractionResult.SUCCESS;
     }
-
     return super.mobInteract(player, hand);
   }
 
@@ -240,18 +233,10 @@ public class PigeonEntity extends TameableBirdEntity
   }
 
   @Override
-  public boolean canTakeItem(ItemStack stack) {
-    EquipmentSlot equipmentSlot = this.getEquipmentSlotForItem(stack);
-    if (!this.getItemBySlot(equipmentSlot).isEmpty()) {
-      return false;
-    }
-    return equipmentSlot == EquipmentSlot.MAINHAND
-        || equipmentSlot == EquipmentSlot.OFFHAND && super.canTakeItem(stack);
-  }
-
-  @Override
   public Ingredient getFood() {
-    return Ingredient.of(FowlPlayItemTags.PIGEON_FOOD);
+    return Ingredient.of(
+        net.minecraft.core.registries.BuiltInRegistries.ITEM.getOrThrow(
+            FowlPlayItemTags.PIGEON_FOOD));
   }
 
   @Override
@@ -260,19 +245,19 @@ public class PigeonEntity extends TameableBirdEntity
   }
 
   @Override
-  protected void dropEquipment() {
-    super.dropEquipment();
-    this.spawnAtLocation(this.getItemBySlot(EquipmentSlot.OFFHAND));
+  protected void dropEquipment(ServerLevel level) {
+    super.dropEquipment(level);
+    this.spawnAtLocation(level, this.getItemBySlot(EquipmentSlot.OFFHAND));
     this.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
   }
 
   @Override
   public void updateAnimationStates() {
-    this.standingState.animateWhen(
-        !this.isFlying() && !this.isInWaterOrBubble() && !this.isInSittingPose(), this.tickCount);
-    this.flappingState.animateWhen(this.isFlying(), this.tickCount);
-    this.swimmingState.animateWhen(!this.isFlying() && this.isInWaterOrBubble(), this.tickCount);
-    this.sittingState.animateWhen(this.isInSittingPose(), this.tickCount);
+    boolean notFlying = !this.isFlying();
+    boolean notSitting = !this.isSitting();
+    this.standingState.animateWhen(notFlying && !this.isUnderWater() && notSitting, this.tickCount);
+    this.swimmingState.animateWhen(notFlying && this.isUnderWater(), this.tickCount);
+    this.sittingState.animateWhen(this.isSitting(), this.tickCount);
   }
 
   @Override
@@ -285,13 +270,45 @@ public class PigeonEntity extends TameableBirdEntity
     return 0.9f;
   }
 
+  public boolean isFlying() {
+    return this.entityData.get(FLYING);
+  }
+
+  public void setFlying(boolean flying) {
+    this.entityData.set(FLYING, flying);
+    if (flying) {
+      this.setPose(Pose.FALL_FLYING);
+    } else if (this.getPose() == Pose.FALL_FLYING) {
+      this.setPose(Pose.STANDING);
+    }
+  }
+
+  public boolean isSitting() {
+    return this.entityData.get(SITTING);
+  }
+
+  public void setSitting(boolean sitting) {
+    this.entityData.set(SITTING, sitting);
+    if (sitting) {
+      this.setPose(Pose.SITTING);
+    } else if (this.getPose() == Pose.SITTING) {
+      this.setPose(Pose.STANDING);
+    }
+  }
+
   @Nullable
   public UUID getRecipientUuid() {
-    return this.entityData.get(RECIPIENT).orElse(null);
+    String str = this.entityData.get(RECIPIENT);
+    if (str.isEmpty()) return null;
+    try {
+      return UUID.fromString(str);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   public void setRecipientUuid(@Nullable UUID uuid) {
-    this.entityData.set(RECIPIENT, Optional.ofNullable(uuid));
+    this.entityData.set(RECIPIENT, uuid != null ? uuid.toString() : "");
   }
 
   @Override
@@ -301,18 +318,12 @@ public class PigeonEntity extends TameableBirdEntity
 
   @Override
   public boolean canSing() {
-    if (this.level().isDay()) {
-      return false;
-    }
+    if (this.level().getDayTime() % 24000L < 13000L) return false;
     List<Player> list =
         this.level()
             .getEntitiesOfClass(
-                Player.class,
-                this.getAttackBoundingBox().inflate(16.0, 16.0, 16.0),
-                EntitySelector.NO_SPECTATORS);
-    if (list.isEmpty()) {
-      return false;
-    }
+                Player.class, this.getBoundingBox().inflate(16.0), EntitySelector.NO_SPECTATORS);
+    if (list.isEmpty()) return false;
     return super.canSing();
   }
 
@@ -386,11 +397,20 @@ public class PigeonEntity extends TameableBirdEntity
 
   @Override
   public BrainActivityGroup<? extends PigeonEntity> deliverActivity() {
+    // Explicit lambdas with FlyingBirdEntity parameter to satisfy startCondition type
     return BirdBrain.deliver(
-        FlightBehaviours.<PigeonEntity>stopFlying()
-            .startCondition(PigeonEntity::shouldStopFlyingToRecipient),
-        FlightBehaviours.<PigeonEntity>startFlying()
-            .startCondition(PigeonEntity::shouldFlyToRecipient),
+        FlightBehaviours.stopFlying()
+            .startCondition(
+                (FlyingBirdEntity bird) -> {
+                  if (bird instanceof PigeonEntity p) return shouldStopFlyingToRecipient(p);
+                  return false;
+                }),
+        FlightBehaviours.startFlying()
+            .startCondition(
+                (FlyingBirdEntity bird) -> {
+                  if (bird instanceof PigeonEntity p) return shouldFlyToRecipient(p);
+                  return false;
+                }),
         DeliverBundle.run());
   }
 
@@ -414,8 +434,7 @@ public class PigeonEntity extends TameableBirdEntity
   @Override
   public BrainActivityGroup<? extends PigeonEntity> pickUpActivity() {
     return BirdBrain.pickUp(
-        CompositeBehaviours.<PigeonEntity>tryPickUpFood()
-            .startCondition(pigeon -> !pigeon.isSitting()));
+        CompositeBehaviours.tryPickUpFood().startCondition(pigeon -> !pigeon.isSitting()));
   }
 
   @Override
@@ -431,39 +450,30 @@ public class PigeonEntity extends TameableBirdEntity
   }
 
   private static boolean shouldFlyToRecipient(PigeonEntity pigeon) {
-    if (!pigeon.isMemoryPresent(FPMemoryTypes.RECIPIENT.get())) {
-      return false;
-    }
+    if (!pigeon.isMemoryPresent(FPMemoryTypes.RECIPIENT.get())) return false;
     UUID recipientUuid = pigeon.getPresentMemory(FPMemoryTypes.RECIPIENT.get());
     Player recipient = pigeon.level().getPlayerByUUID(recipientUuid);
-    if (recipient == null) {
-      return false;
-    }
-    return pigeon.distanceToSqr(recipient) > 64;
+    return recipient != null && pigeon.distanceToSqr(recipient) > 64;
   }
 
   private static boolean shouldStopFlyingToRecipient(PigeonEntity pigeon) {
-    if (!pigeon.isMemoryPresent(FPMemoryTypes.RECIPIENT.get())) {
-      return true;
-    }
+    if (!pigeon.isMemoryPresent(FPMemoryTypes.RECIPIENT.get())) return true;
     UUID recipientUuid = pigeon.getPresentMemory(FPMemoryTypes.RECIPIENT.get());
     Player recipient = pigeon.level().getPlayerByUUID(recipientUuid);
-    if (recipient == null) {
-      return true;
-    }
-    return pigeon.distanceToSqr(recipient) < 16;
+    return recipient == null || pigeon.distanceToSqr(recipient) < 16;
   }
 
   @Override
-  protected void customServerAiStep() {
+  protected void customServerAiStep(ServerLevel level) {
     this.tickBrain(this);
-    super.customServerAiStep();
-
-    if (this.isTamed() && this.getServer() != null) {
+    super.customServerAiStep(level);
+    if (this.isTamed() && this.level().getServer() != null) {
       ItemStack stack = this.getItemBySlot(EquipmentSlot.OFFHAND);
       ServerPlayer recipient =
-          this.getServer().getPlayerList().getPlayerByName(stack.getHoverName().getString());
-
+          this.level()
+              .getServer()
+              .getPlayerList()
+              .getPlayerByName(stack.getHoverName().getString());
       if (!(stack.getItem() instanceof BundleItem)
           || !stack.getComponents().has(DataComponents.CUSTOM_NAME)
           || recipient == null) {

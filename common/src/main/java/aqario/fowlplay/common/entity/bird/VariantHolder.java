@@ -26,15 +26,16 @@ public interface VariantHolder<T> {
 
   default void defineVariant(
       SynchedEntityData.Builder builder, EntityDataAccessor<Holder<T>> accessor) {
-    builder.define(accessor, this.variantRegistry().getHolderOrThrow(this.defaultVariant()));
+    builder.define(accessor, this.variantRegistry().getOrThrow(this.defaultVariant()));
   }
 
   default void writeVariant(CompoundTag nbt) {
-    nbt.putString(VARIANT_KEY, this.getVariantKey().location().toString());
+    // Fixed: ResourceKey.location() removed in 1.21.2+. Use key().location() instead.
+    nbt.putString(VARIANT_KEY, this.getVariantKey().identifier().toString());
   }
 
   default void readVariant(CompoundTag nbt) {
-    Optional.ofNullable(Identifier.tryParse(nbt.getString(VARIANT_KEY)))
+    Optional.ofNullable(Identifier.tryParse(nbt.getString(VARIANT_KEY).orElse("")))
         .map(variant -> ResourceKey.create(this.variantRegistryKey(), variant))
         .flatMap(this::toHolder)
         .ifPresent(this::setVariant);
@@ -49,7 +50,7 @@ public interface VariantHolder<T> {
   }
 
   default Optional<Holder.Reference<T>> toHolder(ResourceKey<T> variant) {
-    return this.variantRegistry().getHolder(variant);
+    return this.variantRegistry().get(variant);
   }
 
   default ResourceKey<T> getVariantKey() {

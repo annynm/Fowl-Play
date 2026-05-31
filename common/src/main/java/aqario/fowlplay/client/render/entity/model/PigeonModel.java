@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.PigeonAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,21 @@ public class PigeonModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("pigeon"), "main");
 
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+  private final KeyframeAnimation flappingAnim;
+  private final KeyframeAnimation sittingAnim;
+
   public PigeonModel(ModelPart root) {
     super(root);
+    this.walkingAnim = PigeonAnimations.WALKING.bake(root);
+    this.standingAnim = PigeonAnimations.STANDING.bake(root);
+    this.swimmingAnim = PigeonAnimations.SWIMMING.bake(root);
+    this.glidingAnim = PigeonAnimations.GLIDING.bake(root);
+    this.flappingAnim = PigeonAnimations.FLAPPING.bake(root);
+    this.sittingAnim = PigeonAnimations.SITTING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -167,12 +181,12 @@ public class PigeonModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(PigeonAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 5F, 5F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 5F, 5F);
     }
-    this.animate(state.standingState, PigeonAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, PigeonAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, PigeonAnimations.GLIDING, state.ageInTicks);
-    this.animate(state.flappingState, PigeonAnimations.FLAPPING, state.ageInTicks);
-    this.animate(state.sittingState, PigeonAnimations.SITTING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
+    this.flappingAnim.apply(state.flappingState, state.ageInTicks);
+    this.sittingAnim.apply(state.sittingState, state.ageInTicks);
   }
 }

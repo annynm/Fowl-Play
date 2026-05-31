@@ -20,7 +20,7 @@ import java.util.List;
 
 public class AttackedSensor<E extends BirdEntity> extends PredicateSensor<DamageSource, E> {
     private static final List<MemoryModuleType<?>> MEMORIES = ImmutableList.of(
-        MemoryModuleType.HURT_BY,
+        MemoryModuleType.HURT_BY_ENTITY,
         MemoryModuleType.HURT_BY_ENTITY,
         MemoryModuleType.AVOID_TARGET,
         FPMemoryTypes.SEES_FOOD.get(),
@@ -46,7 +46,7 @@ public class AttackedSensor<E extends BirdEntity> extends PredicateSensor<Damage
     protected void doTick(ServerLevel world, E bird) {
         DamageSource damageSource = bird.getLastDamageSource();
         if(damageSource == null) {
-            bird.clearMemory(MemoryModuleType.HURT_BY);
+            bird.clearMemory(MemoryModuleType.HURT_BY_ENTITY);
             bird.clearMemory(MemoryModuleType.HURT_BY_ENTITY);
             return;
         }

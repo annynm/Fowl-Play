@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.HawkModel;
 import aqario.fowlplay.common.entity.bird.raptor.HawkEntity;
 import aqario.fowlplay.core.FowlPlay;
@@ -17,7 +17,7 @@ public class HawkRenderer extends MobRenderer<HawkEntity, BirdRenderState, HawkM
     super(context, new HawkModel(context.bakeLayer(HawkModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
+            this, net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
   }
 
   @Override
@@ -26,7 +26,7 @@ public class HawkRenderer extends MobRenderer<HawkEntity, BirdRenderState, HawkM
   }
 
   @Override
-  protected void extractRenderState(HawkEntity entity, BirdRenderState state, float partialTick) {
+  public void extractRenderState(HawkEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
     state.limbSwing = entity.walkAnimation.position();
@@ -35,7 +35,7 @@ public class HawkRenderer extends MobRenderer<HawkEntity, BirdRenderState, HawkM
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     state.isFlying = entity.isFlying();
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
     state.viewXRot = entity.getViewXRot(partialTick);

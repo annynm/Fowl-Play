@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.PenguinAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -13,8 +14,13 @@ public class PenguinModel extends BirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("penguin"), "main");
 
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+
   public PenguinModel(ModelPart root) {
     super(root);
+    this.standingAnim = PenguinAnimations.STANDING.bake(root);
+    this.swimmingAnim = PenguinAnimations.SWIMMING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -120,14 +126,11 @@ public class PenguinModel extends BirdModel<BirdRenderState> {
 
   @Override
   protected void setAnimations(BirdRenderState state) {
-    // TODO: Penguin-specific animations will read from state once
-    // PenguinRenderState subclass is created with sliding/dancing flags.
-    // For now, basic standing/swimming via BirdRenderState fields:
     if (!state.isInWaterOrBubble) {
       this.updateHeadRotation(Mth.wrapDegrees(state.headYaw - state.bodyYaw), state.headPitch);
     }
-    this.animate(state.standingState, PenguinAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, PenguinAnimations.SWIMMING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
   }
 
   @Override

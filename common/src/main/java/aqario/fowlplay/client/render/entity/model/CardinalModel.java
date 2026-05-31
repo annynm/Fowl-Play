@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.CardinalAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -13,9 +14,20 @@ public class CardinalModel extends FlyingBirdModel<BirdRenderState> {
       new ModelLayerLocation(FowlPlay.id("cardinal"), "main");
   public final ModelPart crest;
 
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+  private final KeyframeAnimation flappingAnim;
+
   public CardinalModel(ModelPart root) {
     super(root);
     this.crest = this.head.getChild("crest");
+    this.walkingAnim = CardinalAnimations.WALKING.bake(root);
+    this.standingAnim = CardinalAnimations.STANDING.bake(root);
+    this.swimmingAnim = CardinalAnimations.SWIMMING.bake(root);
+    this.glidingAnim = CardinalAnimations.GLIDING.bake(root);
+    this.flappingAnim = CardinalAnimations.FLAPPING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -161,11 +173,11 @@ public class CardinalModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(CardinalAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 6F, 6F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 6F, 6F);
     }
-    this.animate(state.standingState, CardinalAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, CardinalAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, CardinalAnimations.GLIDING, state.ageInTicks);
-    this.animate(state.flappingState, CardinalAnimations.FLAPPING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
+    this.flappingAnim.apply(state.flappingState, state.ageInTicks);
   }
 }

@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.GooseAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,21 @@ public class GooseModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("goose"), "main");
 
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+  private final KeyframeAnimation flappingAnim;
+  private final KeyframeAnimation sleepingAnim;
+
   public GooseModel(ModelPart root) {
     super(root);
+    this.walkingAnim = GooseAnimations.WALKING.bake(root);
+    this.standingAnim = GooseAnimations.STANDING.bake(root);
+    this.swimmingAnim = GooseAnimations.SWIMMING.bake(root);
+    this.glidingAnim = GooseAnimations.GLIDING.bake(root);
+    this.flappingAnim = GooseAnimations.FLAPPING.bake(root);
+    this.sleepingAnim = GooseAnimations.SLEEPING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -187,12 +201,12 @@ public class GooseModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(GooseAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 3F, 3F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 3F, 3F);
     }
-    this.animate(state.standingState, GooseAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, GooseAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, GooseAnimations.GLIDING, state.ageInTicks);
-    this.animate(state.flappingState, GooseAnimations.FLAPPING, state.ageInTicks);
-    this.animate(state.sleepingState, GooseAnimations.SLEEPING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
+    this.flappingAnim.apply(state.flappingState, state.ageInTicks);
+    this.sleepingAnim.apply(state.sleepingState, state.ageInTicks);
   }
 }

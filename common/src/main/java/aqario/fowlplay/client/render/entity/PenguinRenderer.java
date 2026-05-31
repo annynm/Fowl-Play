@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.AdultBabyModelPair;
 import aqario.fowlplay.client.render.entity.model.BabyPenguinModel;
 import aqario.fowlplay.client.render.entity.model.PenguinModel;
@@ -8,6 +8,7 @@ import aqario.fowlplay.common.entity.bird.penguin.PenguinEntity;
 import aqario.fowlplay.core.FowlPlay;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
@@ -25,7 +26,9 @@ public class PenguinRenderer extends MobRenderer<PenguinEntity, BirdRenderState,
     super(context, new PenguinModel(context.bakeLayer(PenguinModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.145, -0.1475)));
+            this,
+            Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(),
+            new Vec3(0.0, -0.145, -0.1475)));
     this.modelPair =
         new AdultBabyModelPair<>(
             new PenguinModel(context.bakeLayer(PenguinModel.MODEL_LAYER)),
@@ -38,25 +41,19 @@ public class PenguinRenderer extends MobRenderer<PenguinEntity, BirdRenderState,
   }
 
   @Override
-  protected void extractRenderState(
-      PenguinEntity entity, BirdRenderState state, float partialTick) {
+  public void extractRenderState(PenguinEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
-
     state.ageInTicks = entity.tickCount + partialTick;
     state.limbSwing = entity.walkAnimation.position();
     state.limbSwingAmount = entity.walkAnimation.speed();
-
     state.bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
-
     state.isFlying = false;
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
-
     state.customName = ChatFormatting.stripFormatting(entity.getName().getString());
-
     state.standingState.copyFrom(entity.standingState);
     state.swimmingState.copyFrom(entity.swimmingState);
     state.sleepingState.copyFrom(entity.sleepingState);
@@ -64,19 +61,15 @@ public class PenguinRenderer extends MobRenderer<PenguinEntity, BirdRenderState,
 
   @Override
   public void render(
-      BirdRenderState state,
-      PoseStack matrices,
-      MultiBufferSource vertexConsumerProvider,
-      int packedLight) {
+      BirdRenderState state, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
     this.model = this.modelPair.getModel(state.isBaby);
-
     if (state.isBaby) {
       matrices.pushPose();
       matrices.scale(0.8F, 0.8F, 0.8F);
-      super.render(state, matrices, vertexConsumerProvider, packedLight);
+      super.render(state, matrices, buffer, packedLight);
       matrices.popPose();
     } else {
-      super.render(state, matrices, vertexConsumerProvider, packedLight);
+      super.render(state, matrices, buffer, packedLight);
     }
   }
 
@@ -88,7 +81,6 @@ public class PenguinRenderer extends MobRenderer<PenguinEntity, BirdRenderState,
   @Override
   protected void scale(BirdRenderState state, PoseStack matrices, float amount) {
     super.scale(state, matrices, amount);
-
     if (state.customName != null) {
       switch (state.customName.toLowerCase()) {
         case "rico" -> matrices.scale(1.1F, 1F, 1F);

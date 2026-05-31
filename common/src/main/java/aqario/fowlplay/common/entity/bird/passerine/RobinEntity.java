@@ -14,6 +14,8 @@ import aqario.fowlplay.core.FPSoundEvents;
 import aqario.fowlplay.core.tags.FowlPlayEntityTypeTags;
 import aqario.fowlplay.core.tags.FowlPlayItemTags;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import java.util.List;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -34,157 +36,140 @@ import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyLivingEntitySensor;
 import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyPlayersSensor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class RobinEntity extends FlyingBirdEntity implements BirdBrain<RobinEntity> {
-    public RobinEntity(EntityType<? extends RobinEntity> entityType, Level world) {
-        super(entityType, world);
-    }
+  public RobinEntity(EntityType<? extends RobinEntity> entityType, Level world) {
+    super(entityType, world);
+  }
 
-    @Override
-    public boolean isBaby() {
-        return false;
-    }
+  @Override
+  public boolean isBaby() {
+    return false;
+  }
 
-    @Override
-    public Ingredient getFood() {
-        return Ingredient.of(FowlPlayItemTags.ROBIN_FOOD);
-    }
+  @Override
+  public Ingredient getFood() {
+    return Ingredient.of(net.minecraft.core.registries.BuiltInRegistries.ITEM.getOrThrow(FowlPlayItemTags.ROBIN_FOOD));
+  }
 
-    @Override
-    public boolean shouldAvoid(LivingEntity entity) {
-        return entity.getType().is(FowlPlayEntityTypeTags.ROBIN_AVOIDS);
-    }
+  @Override
+  public boolean shouldAvoid(LivingEntity entity) {
+    return entity.getType().is(FowlPlayEntityTypeTags.ROBIN_AVOIDS);
+  }
 
-    @Override
-    public void updateAnimationStates() {
-        this.standingState.animateWhen(!this.isFlying() && !this.isInWaterOrBubble(), this.tickCount);
-        this.flappingState.animateWhen(this.isFlying(), this.tickCount);
-        this.swimmingState.animateWhen(!this.isFlying() && this.isInWaterOrBubble(), this.tickCount);
-    }
+  @Override
+  public void updateAnimationStates() {
+    this.standingState.animateWhen(!this.isFlying() && !this.isInWater(), this.tickCount);
+    this.flappingState.animateWhen(this.isFlying(), this.tickCount);
+    this.swimmingState.animateWhen(!this.isFlying() && this.isInWater(), this.tickCount);
+  }
 
-    @Override
-    public float getFlapVolume() {
-        return 0.5f;
-    }
+  @Override
+  public float getFlapVolume() {
+    return 0.5f;
+  }
 
-    @Override
-    public float getFlapPitch() {
-        return 1.0f;
-    }
+  @Override
+  public float getFlapPitch() {
+    return 1.0f;
+  }
 
-    @Override
-    public Vec3 getLeashOffset() {
-        return new Vec3(0.0, 0.5f * this.getEyeHeight(), this.getBbWidth() * 0.4f);
-    }
+  @Override
+  public Vec3 getLeashOffset() {
+    return new Vec3(0.0, 0.5f * this.getEyeHeight(), this.getBbWidth() * 0.4f);
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getCallSound() {
-        return FPSoundEvents.ROBIN_CALL.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getCallSound() {
+    return FPSoundEvents.ROBIN_CALL.get();
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getSongSound() {
-        return FPSoundEvents.ROBIN_SONG.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getSongSound() {
+    return FPSoundEvents.ROBIN_SONG.get();
+  }
 
-    @Override
-    public int getCallDelay() {
-        return 180;
-    }
+  @Override
+  public int getCallDelay() {
+    return 180;
+  }
 
-    @Override
-    public int getSongDelay() {
-        return 480;
-    }
+  @Override
+  public int getSongDelay() {
+    return 480;
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return FPSoundEvents.ROBIN_HURT.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getHurtSound(DamageSource source) {
+    return FPSoundEvents.ROBIN_HURT.get();
+  }
 
-    @Override
-    protected Brain.Provider<RobinEntity> brainProvider() {
-        return new ExtendedBrainProvider<>(this);
-    }
+  @Override
+  protected Brain.Provider<RobinEntity> brainProvider() {
+    return new ExtendedBrainProvider<>(this);
+  }
 
-    @Override
-    public List<? extends ExtendedSensor<? extends RobinEntity>> getSensors() {
-        return ObjectArrayList.of(
-            new NearbyLivingEntitySensor<>(),
-            new NearbyPlayersSensor<>(),
-            new NearbyFoodSensor<>(),
-            new NearbyAdultsSensor<>(),
-            new InWaterSensor<>(),
-            new AttackedSensor<>(),
-            new AvoidTargetSensor<>()
-        );
-    }
+  @Override
+  public List<? extends ExtendedSensor<? extends RobinEntity>> getSensors() {
+    return ObjectArrayList.of(
+        new NearbyLivingEntitySensor<>(),
+        new NearbyPlayersSensor<>(),
+        new NearbyFoodSensor<>(),
+        new NearbyAdultsSensor<>(),
+        new InWaterSensor<>(),
+        new AttackedSensor<>(),
+        new AvoidTargetSensor<>());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends RobinEntity> coreActivity() {
-        return BirdBrain.core(
-            new WakeUp<>(),
-            new FloatToSurfaceOfFluid<>(),
-            FlightBehaviours.stopFalling(),
-            SetEntityLookTarget.create(BirdUtils::isPlayerHoldingFood),
-            new LookAtTarget<>()
-                .runForBetween(45, 90),
-            new MoveToWalkTarget<>()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends RobinEntity> coreActivity() {
+    return BirdBrain.core(
+        new WakeUp<>(),
+        new FloatToSurfaceOfFluid<>(),
+        FlightBehaviours.stopFalling(),
+        SetEntityLookTarget.create(BirdUtils::isPlayerHoldingFood),
+        new LookAtTarget<>().runForBetween(45, 90),
+        new MoveToWalkTarget<>());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends RobinEntity> avoidActivity() {
-        return BirdBrain.avoid(
-            CustomBehaviours.setAvoidEntityWalkTarget()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends RobinEntity> avoidActivity() {
+    return BirdBrain.avoid(CustomBehaviours.setAvoidEntityWalkTarget());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends RobinEntity> forageActivity() {
-        return BirdBrain.forage(
-            new OneRandomBehaviour<>(
-                CompositeBehaviours.forage(),
-                CompositeBehaviours.perch()
-            )
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends RobinEntity> forageActivity() {
+    return BirdBrain.forage(
+        new OneRandomBehaviour<>(CompositeBehaviours.forage(), CompositeBehaviours.perch()));
+  }
 
-    @Override
-    public BrainActivityGroup<? extends RobinEntity> idleActivity() {
-        return BirdBrain.idle(
-            CompositeBehaviours.perch()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends RobinEntity> idleActivity() {
+    return BirdBrain.idle(CompositeBehaviours.perch());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends RobinEntity> pickUpActivity() {
-        return BirdBrain.pickUp(
-            CompositeBehaviours.tryPickUpFood()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends RobinEntity> pickUpActivity() {
+    return BirdBrain.pickUp(CompositeBehaviours.tryPickUpFood());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends RobinEntity> restActivity() {
-        return BirdBrain.rest(
-            CompositeBehaviours.trySetPerchRestTarget(),
-            CustomBehaviours.sleepIfPerched()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends RobinEntity> restActivity() {
+    return BirdBrain.rest(
+        CompositeBehaviours.trySetPerchRestTarget(), CustomBehaviours.sleepIfPerched());
+  }
 
-    @Nullable
-    @Override
-    public SmartBrainSchedule getSchedule() {
-        return FPSchedules.FORAGER.get();
-    }
+  @Nullable
+  @Override
+  public SmartBrainSchedule getSchedule() {
+    return FPSchedules.FORAGER.get();
+  }
 
-    @Override
-    protected void customServerAiStep() {
-        this.tickBrain(this);
-        super.customServerAiStep();
-    }
+  @Override
+  protected void customServerAiStep(net.minecraft.server.level.ServerLevel level) {
+    this.tickBrain(this);
+    super.customServerAiStep((ServerLevel) this.level());
+  }
 }

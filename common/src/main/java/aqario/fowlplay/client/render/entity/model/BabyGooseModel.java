@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.ChickenAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,15 @@ public class BabyGooseModel extends GooseModel {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("baby_goose"), "main");
 
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+
   public BabyGooseModel(ModelPart root) {
     super(root);
+    this.walkingAnim = ChickenAnimations.WALKING.bake(root);
+    this.standingAnim = ChickenAnimations.STANDING.bake(root);
+    this.swimmingAnim = ChickenAnimations.SWIMMING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -130,9 +138,9 @@ public class BabyGooseModel extends GooseModel {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(ChickenAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 3F, 3F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 3F, 3F);
     }
-    this.animate(state.standingState, ChickenAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, ChickenAnimations.SWIMMING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
   }
 }

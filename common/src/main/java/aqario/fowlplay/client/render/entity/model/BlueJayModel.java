@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.BlueJayAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -13,9 +14,20 @@ public class BlueJayModel extends FlyingBirdModel<BirdRenderState> {
       new ModelLayerLocation(FowlPlay.id("blue_jay"), "main");
   public final ModelPart crest;
 
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+  private final KeyframeAnimation flappingAnim;
+
   public BlueJayModel(ModelPart root) {
     super(root);
     this.crest = this.head.getChild("crest");
+    this.walkingAnim = BlueJayAnimations.WALKING.bake(root);
+    this.standingAnim = BlueJayAnimations.STANDING.bake(root);
+    this.swimmingAnim = BlueJayAnimations.SWIMMING.bake(root);
+    this.glidingAnim = BlueJayAnimations.GLIDING.bake(root);
+    this.flappingAnim = BlueJayAnimations.FLAPPING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -161,10 +173,11 @@ public class BlueJayModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(BlueJayAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 6F, 6F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 6F, 6F);
     }
-    this.animate(state.standingState, BlueJayAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, BlueJayAnimations.SWIMMING, state.ageInTicks);
-    // glidingState and flappingState will be available once added to BirdRenderState
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
+    this.flappingAnim.apply(state.flappingState, state.ageInTicks);
   }
 }

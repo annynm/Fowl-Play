@@ -52,7 +52,7 @@ public final class BirdUtils {
         if(bird.canStartFlying()
             && (shouldFlyToDestination(bird, path, path.getTarget().getCenter())
 //            && !(bird.getType().is(FowlPlayEntityTypeTags.WATERBIRDS)
-//            && bird.isInWaterOrBubble())
+//            && bird.isInWater())
             || shouldFlyFromAvoidTarget(bird))
         ) {
             bird.startFlying();
@@ -98,7 +98,7 @@ public final class BirdUtils {
     }
 
     public static <E extends BirdEntity> boolean isSelfAndTargetInWater(E self, LivingEntity target) {
-        return self.isInWaterOrBubble() && target.isUnderWater() && target.position().y < self.position().y;
+        return self.isInWater() && target.isUnderWater() && target.position().y < self.position().y;
     }
 
     public static boolean isNotFlightless(Entity entity) {

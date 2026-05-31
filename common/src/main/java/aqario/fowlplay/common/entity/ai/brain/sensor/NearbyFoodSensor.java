@@ -25,7 +25,7 @@ public class NearbyFoodSensor<E extends BirdEntity> extends PredicateSensor<Item
     );
 
     public NearbyFoodSensor() {
-        super((item, bird) -> bird.wantsToPickUp(item.getItem()) && bird.hasLineOfSight(item));
+        super((item, bird) -> bird.wantsToPickUp((net.minecraft.server.level.ServerLevel) bird.level(), item.getItem()) && bird.hasLineOfSight(item));
     }
 
     @Override

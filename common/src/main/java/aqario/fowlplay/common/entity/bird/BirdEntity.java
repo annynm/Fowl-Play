@@ -4,7 +4,6 @@ import aqario.fowlplay.common.entity.CustomMobCategory;
 import aqario.fowlplay.common.entity.ai.control.BirdBodyRotationControl;
 import aqario.fowlplay.common.entity.ai.control.BirdLookControl;
 import aqario.fowlplay.common.entity.ai.control.BirdMoveControl;
-import aqario.fowlplay.common.network.FowlPlayDebugPackets;
 import aqario.fowlplay.common.util.AnimationStateList;
 import aqario.fowlplay.common.util.BirdUtils;
 import aqario.fowlplay.core.FPMemoryTypes;
@@ -116,8 +115,8 @@ public abstract class BirdEntity extends Animal {
   }
 
   @Override
-  public void addAdditionalSaveData(CompoundTag nbt) {
-    super.addAdditionalSaveData(nbt);
+  public void saveCustomDataToTag(
+      CompoundTag nbt, net.minecraft.core.RegistryAccess registryAccess) {
     nbt.putBoolean(AMBIENT_KEY, this.ambient);
     nbt.putBoolean(SLEEPING_KEY, this.isSleeping());
     if (this.isMemoryPresent(MemoryModuleType.HAS_HUNTING_COOLDOWN)) {
@@ -127,20 +126,18 @@ public abstract class BirdEntity extends Animal {
   }
 
   @Override
-  public void readAdditionalSaveData(CompoundTag nbt) {
-    super.readAdditionalSaveData(nbt);
-    this.setAmbient(nbt.getBoolean(AMBIENT_KEY));
-    this.setSleeping(nbt.getBoolean(SLEEPING_KEY));
+  public void loadCustomDataFromTag(
+      CompoundTag nbt, net.minecraft.core.RegistryAccess registryAccess) {
+    this.setAmbient(nbt.getBoolean(AMBIENT_KEY).orElse(false));
+    this.setSleeping(nbt.getBoolean(SLEEPING_KEY).orElse(false));
     if (nbt.contains(HUNTING_COOLDOWN_KEY)) {
       this.setMemoryWithExpiry(
-          MemoryModuleType.HAS_HUNTING_COOLDOWN, true, nbt.getLong(HUNTING_COOLDOWN_KEY));
+          MemoryModuleType.HAS_HUNTING_COOLDOWN,
+          true,
+          nbt.getLong(HUNTING_COOLDOWN_KEY).orElse(0L));
     }
   }
 
-  /**
-   * ambient birds are able to despawn when far enough from the player, or when the chunks are
-   * unloaded
-   */
   public boolean isAmbient() {
     return this.ambient;
   }
@@ -149,26 +146,14 @@ public abstract class BirdEntity extends Animal {
     this.ambient = ambient;
   }
 
-  @Override
   public boolean removeWhenFarAway(double distanceSquared) {
     return this.isAmbient() && !this.isPersistenceRequired() && !this.hasCustomName();
   }
 
-  @Override
   public int getMaxSpawnClusterSize() {
     return 6;
   }
 
-  @Override
-  public boolean canTakeItem(ItemStack stack) {
-    EquipmentSlot slot = this.getEquipmentSlotForItem(stack);
-    if (!this.getItemBySlot(slot).isEmpty()) {
-      return false;
-    }
-    return slot == EquipmentSlot.MAINHAND && super.canTakeItem(stack);
-  }
-
-  @Override
   public void setBaby(boolean baby) {
     this.setAge(baby ? -72000 : 0);
   }
@@ -196,9 +181,7 @@ public abstract class BirdEntity extends Animal {
 
   private void dropWithoutDelay(ItemStack stack, Entity thrower) {
     ItemEntity item = new ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(), stack);
-    if (thrower != null) {
-      item.setThrower(thrower);
-    }
+    if (thrower != null) item.setThrower(thrower);
     this.level().addFreshEntity(item);
   }
 
@@ -208,11 +191,10 @@ public abstract class BirdEntity extends Animal {
     ItemStack stack = item.getItem();
     if (this.canHoldItem(stack)) {
       int i = stack.getCount();
-      if (i > 1) {
-        this.dropWithoutDelay(stack.split(i - 1), thrower);
+      if (i > 1) this.dropWithoutDelay(stack.split(i - 1), thrower);
+      if (this.level() instanceof ServerLevel serverLevel) {
+        this.spawnAtLocation(serverLevel, this.getItemBySlot(EquipmentSlot.MAINHAND));
       }
-      // spit out current item
-      this.spawnAtLocation(this.getItemBySlot(EquipmentSlot.MAINHAND));
       this.onItemPickup(item);
       this.setItemSlot(EquipmentSlot.MAINHAND, stack.split(1));
       this.setGuaranteedDrop(EquipmentSlot.MAINHAND);
@@ -225,23 +207,16 @@ public abstract class BirdEntity extends Animal {
   }
 
   @Override
-  protected void dropEquipment() {
-    super.dropEquipment();
+  protected void dropEquipment(ServerLevel level) {
+    super.dropEquipment(level);
     this.dropBeakItem();
   }
 
   protected void dropBeakItem() {
-    this.spawnAtLocation(this.getItemBySlot(EquipmentSlot.MAINHAND));
-    this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-  }
-
-  @Override
-  public boolean hurt(DamageSource source, float amount) {
-    boolean bl = super.hurt(source, amount);
-    if (bl) {
-      this.dropBeakItem();
+    if (this.level() instanceof ServerLevel serverLevel) {
+      this.spawnAtLocation(serverLevel, this.getItemBySlot(EquipmentSlot.MAINHAND));
     }
-    return bl;
+    this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
   }
 
   public boolean isWaterAboveFloatHeight() {
@@ -259,7 +234,6 @@ public abstract class BirdEntity extends Animal {
     if (this.canFloat() && this.isWaterAboveFloatHeight()) {
       double error =
           Mth.clamp(this.getFluidHeight(FluidTags.WATER) / this.getBoundingBox().getYsize(), 0, 1);
-      // cubically proportional to the percentage of hitbox submerged underwater
       double floatVelocity = 0.1 * Math.pow(error, 3);
       return deltaMovement.add(
           0.0, deltaMovement.y < floatVelocity - 0.005 ? floatVelocity : -0.003, 0.0);
@@ -320,12 +294,11 @@ public abstract class BirdEntity extends Animal {
   }
 
   @Override
-  public boolean killedEntity(ServerLevel level, LivingEntity entity) {
-    boolean bl = super.killedEntity(level, entity);
+  public boolean killedEntity(ServerLevel level, LivingEntity entity, DamageSource source) {
+    boolean bl = super.killedEntity(level, entity, source);
     if (bl) {
-      if (this.canHunt(entity)) {
+      if (this.canHunt(entity))
         this.setMemoryWithExpiry(MemoryModuleType.HAS_HUNTING_COOLDOWN, true, 18000L);
-      }
       return true;
     }
     return false;
@@ -340,15 +313,12 @@ public abstract class BirdEntity extends Animal {
       if (this.canEat(stack)) {
         if ((this.eatingTime > 40 && this.random.nextFloat() < 0.05f) || this.eatingTime > 200) {
           if (stack.getItem().components().has(DataComponents.FOOD)) {
-            // noinspection ConstantConditions
             this.heal(stack.getItem().components().get(DataComponents.FOOD).nutrition());
           } else {
             stack.shrink(1);
           }
           ItemStack usedStack = stack.finishUsingItem(this.level(), this);
-          if (!usedStack.isEmpty()) {
-            this.setItemSlot(EquipmentSlot.MAINHAND, usedStack);
-          }
+          if (!usedStack.isEmpty()) this.setItemSlot(EquipmentSlot.MAINHAND, usedStack);
           this.playSound(this.getEatingSound(stack), 1.0f, 1.0f);
           this.level().broadcastEntityEvent(this, EntityEvent.FOX_EAT);
           this.eatingTime = 0;
@@ -360,7 +330,9 @@ public abstract class BirdEntity extends Animal {
         }
       } else if (this.shouldDropBeakItem(stack)) {
         if (this.random.nextFloat() < 0.1f) {
-          this.spawnAtLocation(this.getItemBySlot(EquipmentSlot.MAINHAND));
+          if (this.level() instanceof ServerLevel serverLevel) {
+            this.spawnAtLocation(serverLevel, this.getItemBySlot(EquipmentSlot.MAINHAND));
+          }
           this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         }
       }
@@ -402,13 +374,9 @@ public abstract class BirdEntity extends Animal {
 
   @Override
   public void tick() {
-    if (this.level().isClientSide()) {
-      this.updateAnimationStates();
-    }
+    if (this.level().isClientSide()) this.updateAnimationStates();
     super.tick();
-    if (this.isAmbient() && !this.shouldBeAmbient()) {
-      this.setAmbient(false);
-    }
+    if (this.isAmbient() && !this.shouldBeAmbient()) this.setAmbient(false);
   }
 
   protected boolean isMoving() {
@@ -424,8 +392,7 @@ public abstract class BirdEntity extends Animal {
     } else {
       this.sleepingState.stop();
     }
-    // on land
-    if (!this.isInWaterOrBubble()) {
+    if (!this.isUnderWater()) {
       if (this.random.nextInt(1000) < this.idleAnimationChance++ && !this.isMoving()) {
         this.resetIdleAnimationDelay();
         this.standingState.stop();
@@ -443,8 +410,7 @@ public abstract class BirdEntity extends Animal {
       this.standingState.stop();
       this.idleAnimStates.stopAll();
     }
-    // in water
-    this.swimmingState.animateWhen(this.isInWaterOrBubble(), this.tickCount);
+    this.swimmingState.animateWhen(this.isUnderWater(), this.tickCount);
   }
 
   protected int getIdleAnimationDelay() {
@@ -479,9 +445,8 @@ public abstract class BirdEntity extends Animal {
 
   @Override
   public void playSound(SoundEvent sound, float volume, float pitch) {
-    if (!this.isSilent() && sound != null) {
+    if (!this.isSilent() && sound != null)
       this.level().playSound(null, this, sound, this.getSoundSource(), volume, pitch);
-    }
   }
 
   public int getCallDelay() {
@@ -514,7 +479,6 @@ public abstract class BirdEntity extends Animal {
     return null;
   }
 
-  @Override
   public SoundEvent getEatingSound(ItemStack stack) {
     return FPSoundEvents.BIRD_EAT.get();
   }
@@ -553,16 +517,6 @@ public abstract class BirdEntity extends Animal {
     return (this.random.nextFloat() - this.random.nextFloat()) * 0.05F + 1.0F;
   }
 
-  @Override
-  protected void sendDebugPackets() {
-    super.sendDebugPackets();
-    if (this.level() instanceof ServerLevel serverLevel) {
-      serverLevel.sendBrainDebug(this);
-    }
-    FowlPlayDebugPackets.sendBirdData(this);
-  }
-
-  /** equivalent to isPresent check on optional memory */
   public <U> boolean isMemoryPresent(MemoryModuleType<U> memoryType) {
     return this.brain.hasMemoryValue(memoryType);
   }
@@ -583,7 +537,6 @@ public abstract class BirdEntity extends Animal {
     return this.brain.getTimeUntilExpiry(memory);
   }
 
-  /** a null value is equivalent to clearMemory */
   public <U> void setMemory(MemoryModuleType<U> memoryType, U value) {
     this.brain.setMemory(memoryType, value);
   }
@@ -609,8 +562,6 @@ public abstract class BirdEntity extends Animal {
   }
 
   public void updateSchedule() {
-    if (this instanceof SmartBrainOwner<?> brainHaver) {
-      this.setSchedule(brainHaver.getSchedule());
-    }
+    if (this instanceof SmartBrainOwner<?> brainHaver) this.setSchedule(brainHaver.getSchedule());
   }
 }

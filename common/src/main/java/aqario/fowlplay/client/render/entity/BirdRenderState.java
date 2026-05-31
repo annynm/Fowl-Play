@@ -4,6 +4,7 @@ import aqario.fowlplay.common.entity.variant.GooseVariant;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.item.ItemStack; // Added import
 
 public class BirdRenderState extends LivingEntityRenderState {
   public float ageInTicks;
@@ -54,4 +55,7 @@ public class BirdRenderState extends LivingEntityRenderState {
   public float rightArmRotX;
   public float rightArmRotY;
   public float rightArmRotZ;
+
+  // Added for BirdHeldItemLayer
+  public ItemStack heldItem = ItemStack.EMPTY;
 }

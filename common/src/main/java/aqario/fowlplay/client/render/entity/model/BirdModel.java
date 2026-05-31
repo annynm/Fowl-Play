@@ -23,6 +23,9 @@ public abstract class BirdModel<S extends BirdRenderState> extends EntityModel<S
   public final ModelPart tail;
 
   public BirdModel(ModelPart root) {
+    // Fixed for 1.21.11: EntityModel now requires the root ModelPart in the constructor
+    super(root.getChild("root"));
+
     this.root = root.getChild("root");
     this.body = this.root.getChild("body");
     this.neck = this.body.getChild("neck");
@@ -35,10 +38,8 @@ public abstract class BirdModel<S extends BirdRenderState> extends EntityModel<S
     this.tail = this.body.getChild("tail");
   }
 
-  @Override
-  public ModelPart root() {
-    return this.root;
-  }
+  // Removed @Override public ModelPart root() because it is now final in 1.21.11's Model interface.
+  // The inherited root() method will automatically return the ModelPart we passed to super().
 
   @Override
   public void setupAnim(S state) {

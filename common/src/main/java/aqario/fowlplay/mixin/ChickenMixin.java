@@ -41,7 +41,7 @@ public abstract class ChickenMixin extends Animal
       EntitySpawnReason spawnReason,
       @Nullable SpawnGroupData entityData) {
     FPBuiltInRegistries.CHICKEN_VARIANT
-        .getHolder(ChickenVariant.RED_JUNGLEFOWL)
+        .get(ChickenVariant.RED_JUNGLEFOWL)
         .ifPresent(this::setVariant);
 
     return super.finalizeSpawn(level, difficulty, spawnReason, entityData);
@@ -65,10 +65,10 @@ public abstract class ChickenMixin extends Animal
       cancellable = true)
   private void fowlplay$createChild(
       ServerLevel level, AgeableMob otherParent, CallbackInfoReturnable<Chicken> cir) {
-    Chicken child = EntityType.CHICKEN.create(level);
+    Chicken child = EntityType.CHICKEN.create(level, net.minecraft.world.entity.EntitySpawnReason.BREEDING);
     if (child != null) {
       FPBuiltInRegistries.CHICKEN_VARIANT
-          .getHolder(ChickenVariant.WHITE)
+          .get(ChickenVariant.WHITE)
           .ifPresent(variant -> DataAttachmentHelper.setChickenVariant(child, variant));
     }
     cir.setReturnValue(child);
@@ -103,10 +103,10 @@ public abstract class ChickenMixin extends Animal
   public void tick() {
     if (this.level().isClientSide()) {
       this.fowlplay$standingState.animateWhen(
-          this.onGround() && !this.isInWaterOrBubble(), this.tickCount);
+          this.onGround() && !this.isInWater(), this.tickCount);
       this.fowlplay$flappingState.animateWhen(
-          !this.onGround() && !this.isInWaterOrBubble(), this.tickCount);
-      this.fowlplay$swimmingState.animateWhen(this.isInWaterOrBubble(), this.tickCount);
+          !this.onGround() && !this.isInWater(), this.tickCount);
+      this.fowlplay$swimmingState.animateWhen(this.isInWater(), this.tickCount);
     }
     super.tick();
   }

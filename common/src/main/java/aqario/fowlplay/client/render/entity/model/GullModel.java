@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.GullAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,19 @@ public class GullModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("gull"), "main");
 
+  private final KeyframeAnimation flappingAnim;
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+
   public GullModel(ModelPart root) {
     super(root);
+    this.flappingAnim = GullAnimations.FLAPPING.bake(root);
+    this.walkingAnim = GullAnimations.WALKING.bake(root);
+    this.standingAnim = GullAnimations.STANDING.bake(root);
+    this.swimmingAnim = GullAnimations.SWIMMING.bake(root);
+    this.glidingAnim = GullAnimations.GLIDING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -170,12 +182,12 @@ public class GullModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (state.isFlying) {
-      this.animateWalk(GullAnimations.FLAPPING, state.limbSwing, state.limbSwingAmount, 2F, 2F);
+      this.flappingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 2F, 2F);
     } else if (!state.isInWaterOrBubble) {
-      this.animateWalk(GullAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 4F, 4F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 4F, 4F);
     }
-    this.animate(state.standingState, GullAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, GullAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, GullAnimations.GLIDING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
   }
 }

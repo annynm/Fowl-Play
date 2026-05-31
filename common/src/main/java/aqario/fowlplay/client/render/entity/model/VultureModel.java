@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.HawkAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,19 @@ public class VultureModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("vulture"), "main");
 
+  private final KeyframeAnimation flappingAnim;
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+
   public VultureModel(ModelPart root) {
     super(root);
+    this.flappingAnim = HawkAnimations.FLAPPING.bake(root);
+    this.walkingAnim = HawkAnimations.WALKING.bake(root);
+    this.standingAnim = HawkAnimations.STANDING.bake(root);
+    this.swimmingAnim = HawkAnimations.SWIMMING.bake(root);
+    this.glidingAnim = HawkAnimations.GLIDING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -196,13 +208,13 @@ public class VultureModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (state.isFlying) {
-      this.animateWalk(HawkAnimations.FLAPPING, state.limbSwing, state.limbSwingAmount, 1.5F, 1.5F);
+      this.flappingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 1.5F, 1.5F);
     } else if (!state.isInWaterOrBubble) {
-      this.animateWalk(HawkAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 2.5F, 4F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 2.5F, 4F);
     }
-    this.animate(state.standingState, HawkAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, HawkAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, HawkAnimations.GLIDING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
   }
 
   @Override

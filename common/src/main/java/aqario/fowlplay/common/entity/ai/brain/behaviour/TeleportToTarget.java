@@ -58,7 +58,7 @@ public class TeleportToTarget extends ExtendedBehaviour<BirdEntity> {
             return false;
         }
 
-        entity.moveTo(x + 0.5, y, z + 0.5, entity.getYRot(), entity.getXRot());
+        entity.setPos(x + 0.5, (double) y, z + 0.5); entity.setYRot(entity.getYRot()); entity.setXRot(entity.getXRot());
         entity.getNavigation().stop();
         return true;
     }

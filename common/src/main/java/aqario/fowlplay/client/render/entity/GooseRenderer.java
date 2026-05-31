@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.AdultBabyModelPair;
 import aqario.fowlplay.client.render.entity.model.BabyGooseModel;
 import aqario.fowlplay.client.render.entity.model.DomesticGooseModel;
@@ -23,7 +23,7 @@ public class GooseRenderer extends MobRenderer<GooseEntity, BirdRenderState, Goo
     super(context, new GooseModel(context.bakeLayer(GooseModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
+            this, net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
     this.models =
         Map.of(
             GooseVariant.ModelType.WILD,
@@ -42,7 +42,7 @@ public class GooseRenderer extends MobRenderer<GooseEntity, BirdRenderState, Goo
   }
 
   @Override
-  protected void extractRenderState(GooseEntity entity, BirdRenderState state, float partialTick) {
+  public void extractRenderState(GooseEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
     state.limbSwing = entity.walkAnimation.position();
@@ -51,7 +51,7 @@ public class GooseRenderer extends MobRenderer<GooseEntity, BirdRenderState, Goo
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     state.isFlying = entity.isFlying();
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
     state.viewXRot = entity.getViewXRot(partialTick);

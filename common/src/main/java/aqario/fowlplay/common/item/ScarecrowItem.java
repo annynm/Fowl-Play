@@ -19,43 +19,59 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class ScarecrowItem extends Item {
-    public ScarecrowItem(Properties settings) {
-        super(settings);
+  public ScarecrowItem(Properties settings) {
+    super(settings);
+  }
+
+  @Override
+  public InteractionResult useOn(UseOnContext usageContext) {
+    Direction direction = usageContext.getClickedFace();
+    if (direction == Direction.DOWN) {
+      return InteractionResult.FAIL;
+    }
+    Level world = usageContext.getLevel();
+    BlockPlaceContext placementContext = new BlockPlaceContext(usageContext);
+    BlockPos blockPos = placementContext.getClickedPos();
+    ItemStack itemStack = usageContext.getItemInHand();
+    Vec3 vec3d = Vec3.atBottomCenterOf(blockPos);
+    AABB box =
+        FPEntityTypes.SCARECROW
+            .get()
+            .getDimensions()
+            .makeBoundingBox(vec3d.x(), vec3d.y(), vec3d.z());
+    if (!world.noCollision(null, box) || !world.getEntities(null, box).isEmpty()) {
+      return InteractionResult.FAIL;
     }
 
-    @Override
-    public InteractionResult useOn(UseOnContext usageContext) {
-        Direction direction = usageContext.getClickedFace();
-        if(direction == Direction.DOWN) {
-            return InteractionResult.FAIL;
-        }
-        Level world = usageContext.getLevel();
-        BlockPlaceContext placementContext = new BlockPlaceContext(usageContext);
-        BlockPos blockPos = placementContext.getClickedPos();
-        ItemStack itemStack = usageContext.getItemInHand();
-        Vec3 vec3d = Vec3.atBottomCenterOf(blockPos);
-        AABB box = FPEntityTypes.SCARECROW.get().getDimensions().makeBoundingBox(vec3d.x(), vec3d.y(), vec3d.z());
-        if(!world.noCollision(null, box) || !world.getEntities(null, box).isEmpty()) {
-            return InteractionResult.FAIL;
-        }
+    if (world instanceof ServerLevel serverWorld) {
+      ScarecrowEntity scarecrow =
+          FPEntityTypes.SCARECROW
+              .get()
+              .create(serverWorld, null, blockPos, EntitySpawnReason.SPAWN_ITEM_USE, true, true);
+      if (scarecrow == null) {
+        return InteractionResult.FAIL;
+      }
 
-        if(world instanceof ServerLevel serverWorld) {
-            ScarecrowEntity scarecrow = FPEntityTypes.SCARECROW.get()
-                .create(serverWorld, null, blockPos, EntitySpawnReason.SPAWN_EGG, true, true);
-            if(scarecrow == null) {
-                return InteractionResult.FAIL;
-            }
-
-            float yaw = (float) Mth.floor((Mth.wrapDegrees(usageContext.getRotation() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
-            scarecrow.moveTo(scarecrow.getX(), scarecrow.getY(), scarecrow.getZ(), yaw, 0.0F);
-            serverWorld.addFreshEntityWithPassengers(scarecrow);
-            world.playSound(
-                null, scarecrow.getX(), scarecrow.getY(), scarecrow.getZ(), scarecrow.getPlaceSound(), SoundSource.BLOCKS, 0.75F, 0.8F
-            );
-            scarecrow.gameEvent(GameEvent.ENTITY_PLACE, usageContext.getPlayer());
-        }
-
-        itemStack.shrink(1);
-        return InteractionResult.sidedSuccess(world.isClientSide());
+      float yaw =
+          (float) Mth.floor((Mth.wrapDegrees(usageContext.getRotation() - 180.0F) + 22.5F) / 45.0F)
+              * 45.0F;
+      scarecrow.setPos(scarecrow.getX(), scarecrow.getY(), scarecrow.getZ());
+      scarecrow.setYRot(yaw);
+      scarecrow.setXRot(0.0F);
+      serverWorld.addFreshEntityWithPassengers(scarecrow);
+      world.playSound(
+          null,
+          scarecrow.getX(),
+          scarecrow.getY(),
+          scarecrow.getZ(),
+          scarecrow.getPlaceSound(),
+          SoundSource.BLOCKS,
+          0.75F,
+          0.8F);
+      scarecrow.gameEvent(GameEvent.ENTITY_PLACE, usageContext.getPlayer());
     }
+
+    itemStack.shrink(1);
+    return world.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+  }
 }

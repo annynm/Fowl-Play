@@ -3,6 +3,7 @@ package aqario.fowlplay.client.render.entity.model;
 import aqario.fowlplay.client.render.entity.BirdRenderState;
 import aqario.fowlplay.client.render.entity.animation.ChickadeeAnimations;
 import aqario.fowlplay.core.FowlPlay;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -12,8 +13,19 @@ public class ChickadeeModel extends FlyingBirdModel<BirdRenderState> {
   public static final ModelLayerLocation MODEL_LAYER =
       new ModelLayerLocation(FowlPlay.id("chickadee"), "main");
 
+  private final KeyframeAnimation walkingAnim;
+  private final KeyframeAnimation standingAnim;
+  private final KeyframeAnimation swimmingAnim;
+  private final KeyframeAnimation glidingAnim;
+  private final KeyframeAnimation flappingAnim;
+
   public ChickadeeModel(ModelPart root) {
     super(root);
+    this.walkingAnim = ChickadeeAnimations.WALKING.bake(root);
+    this.standingAnim = ChickadeeAnimations.STANDING.bake(root);
+    this.swimmingAnim = ChickadeeAnimations.SWIMMING.bake(root);
+    this.glidingAnim = ChickadeeAnimations.GLIDING.bake(root);
+    this.flappingAnim = ChickadeeAnimations.FLAPPING.bake(root);
   }
 
   public static LayerDefinition createBodyLayer() {
@@ -152,11 +164,11 @@ public class ChickadeeModel extends FlyingBirdModel<BirdRenderState> {
   @Override
   protected void setAnimations(BirdRenderState state) {
     if (!state.isFlying && !state.isInWaterOrBubble) {
-      this.animateWalk(ChickadeeAnimations.WALKING, state.limbSwing, state.limbSwingAmount, 6F, 6F);
+      this.walkingAnim.applyWalk(state.limbSwing, state.limbSwingAmount, 6F, 6F);
     }
-    this.animate(state.standingState, ChickadeeAnimations.STANDING, state.ageInTicks);
-    this.animate(state.swimmingState, ChickadeeAnimations.SWIMMING, state.ageInTicks);
-    this.animate(state.glidingState, ChickadeeAnimations.GLIDING, state.ageInTicks);
-    this.animate(state.flappingState, ChickadeeAnimations.FLAPPING, state.ageInTicks);
+    this.standingAnim.apply(state.standingState, state.ageInTicks);
+    this.swimmingAnim.apply(state.swimmingState, state.ageInTicks);
+    this.glidingAnim.apply(state.glidingState, state.ageInTicks);
+    this.flappingAnim.apply(state.flappingState, state.ageInTicks);
   }
 }

@@ -19,7 +19,6 @@ subprojects {
     apply plugin: 'dev.architectury.loom'
     apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
-
     base { archivesName = rootProject.mod_id }
 
     java {
@@ -39,7 +38,7 @@ subprojects {
         maven { url = "https://dl.cloudsmith.io/public/tslat/sbl/maven/" }
         maven { url = 'https://maven.parchmentmc.org' }
         maven { url = "https://maven.shedaniel.me/" }
-        maven { 
+        maven {
             name = 'luck-repo'
             url = 'https://repo.lucko.me/'
             content { includeModule 'me.lucko', 'spark-api' }
@@ -76,10 +75,10 @@ subprojects {
     }
 
     tasks.register("cleanGenerated", Delete) { delete file("src/main/generated") }
-    
-    tasks.withType(JavaCompile).configureEach { 
+
+    tasks.withType(JavaCompile).configureEach {
         it.dependsOn tasks.named("cleanGenerated")
-        it.options.release = 21 
+        it.options.release = 21
     }
 
     jar {

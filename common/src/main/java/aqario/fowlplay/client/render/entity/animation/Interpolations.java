@@ -4,10 +4,15 @@ import net.minecraft.client.animation.AnimationChannel;
 import org.joml.Vector3f;
 
 public class Interpolations {
-    public static final AnimationChannel.Interpolation LINEAR = AnimationChannel.Interpolations.LINEAR;
-    public static final AnimationChannel.Interpolation SPLINE = AnimationChannel.Interpolations.CATMULLROM;
-    public static final AnimationChannel.Interpolation STEP = (vector, delta, keyframes, currentFrame, targetFrame, strength) -> {
+  public static final AnimationChannel.Interpolation LINEAR =
+      AnimationChannel.Interpolations.LINEAR;
+  public static final AnimationChannel.Interpolation SPLINE =
+      AnimationChannel.Interpolations.CATMULLROM;
+  public static final AnimationChannel.Interpolation STEP =
+      (vector, delta, keyframes, currentFrame, targetFrame, strength) -> {
+        // In 1.21.11, Keyframe is a record with a 'target' field.
+        // Access via .target() method (record accessor).
         Vector3f startFrame = keyframes[currentFrame].target();
         return startFrame.lerp(startFrame, delta, vector).mul(strength);
-    };
+      };
 }

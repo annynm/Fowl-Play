@@ -15,6 +15,8 @@ import aqario.fowlplay.core.FPSoundEvents;
 import aqario.fowlplay.core.tags.FowlPlayEntityTypeTags;
 import aqario.fowlplay.core.tags.FowlPlayItemTags;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import java.util.List;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -34,136 +36,121 @@ import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyLivingEntitySensor;
 import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyPlayersSensor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class BlueJayEntity extends FlyingBirdEntity implements BirdBrain<BlueJayEntity> {
-    public BlueJayEntity(EntityType<? extends BirdEntity> entityType, Level world) {
-        super(entityType, world);
-    }
+  public BlueJayEntity(EntityType<? extends BirdEntity> entityType, Level world) {
+    super(entityType, world);
+  }
 
-    @Override
-    public Ingredient getFood() {
-        return Ingredient.of(FowlPlayItemTags.BLUE_JAY_FOOD);
-    }
+  @Override
+  public Ingredient getFood() {
+    return Ingredient.of(
+        net.minecraft.core.registries.BuiltInRegistries.ITEM.getOrThrow(
+            FowlPlayItemTags.BLUE_JAY_FOOD));
+  }
 
-    @Override
-    public boolean shouldAvoid(LivingEntity entity) {
-        return entity.getType().is(FowlPlayEntityTypeTags.BLUE_JAY_AVOIDS);
-    }
+  @Override
+  public boolean shouldAvoid(LivingEntity entity) {
+    return entity.getType().is(FowlPlayEntityTypeTags.BLUE_JAY_AVOIDS);
+  }
 
-    @Override
-    protected void updateAnimationStates() {
-        this.standingState.animateWhen(!this.isFlying() && !this.isInWaterOrBubble(), this.tickCount);
-        this.flappingState.animateWhen(this.isFlying(), this.tickCount);
-        this.swimmingState.animateWhen(!this.isFlying() && this.isInWaterOrBubble(), this.tickCount);
-    }
+  @Override
+  protected void updateAnimationStates() {
+    this.standingState.animateWhen(!this.isFlying() && !this.isInWater(), this.tickCount);
+    this.flappingState.animateWhen(this.isFlying(), this.tickCount);
+    this.swimmingState.animateWhen(!this.isFlying() && this.isInWater(), this.tickCount);
+  }
 
-    @Override
-    public float getFlapVolume() {
-        return 0.5f;
-    }
+  @Override
+  public float getFlapVolume() {
+    return 0.5f;
+  }
 
-    @Override
-    public float getFlapPitch() {
-        return 1.0f;
-    }
+  @Override
+  public float getFlapPitch() {
+    return 1.0f;
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getCallSound() {
-        return FPSoundEvents.BLUE_JAY_CALL.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getCallSound() {
+    return FPSoundEvents.BLUE_JAY_CALL.get();
+  }
 
-    @Override
-    public int getCallDelay() {
-        return 480;
-    }
+  @Override
+  public int getCallDelay() {
+    return 480;
+  }
 
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return FPSoundEvents.BLUE_JAY_HURT.get();
-    }
+  @Nullable
+  @Override
+  protected SoundEvent getHurtSound(DamageSource source) {
+    return FPSoundEvents.BLUE_JAY_HURT.get();
+  }
 
-    @Override
-    protected Brain.Provider<BlueJayEntity> brainProvider() {
-        return new ExtendedBrainProvider<>(this);
-    }
+  @Override
+  protected Brain.Provider<BlueJayEntity> brainProvider() {
+    return new ExtendedBrainProvider<>(this);
+  }
 
-    @Override
-    public List<? extends ExtendedSensor<? extends BlueJayEntity>> getSensors() {
-        return ObjectArrayList.of(
-            new NearbyLivingEntitySensor<>(),
-            new NearbyPlayersSensor<>(),
-            new NearbyFoodSensor<>(),
-            new NearbyAdultsSensor<>(),
-            new InWaterSensor<>(),
-            new AttackedSensor<>(),
-            new AvoidTargetSensor<>()
-        );
-    }
+  @Override
+  public List<? extends ExtendedSensor<? extends BlueJayEntity>> getSensors() {
+    return ObjectArrayList.of(
+        new NearbyLivingEntitySensor<>(),
+        new NearbyPlayersSensor<>(),
+        new NearbyFoodSensor<>(),
+        new NearbyAdultsSensor<>(),
+        new InWaterSensor<>(),
+        new AttackedSensor<>(),
+        new AvoidTargetSensor<>());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends BlueJayEntity> coreActivity() {
-        return BirdBrain.core(
-            new WakeUp<>(),
-            new FloatToSurfaceOfFluid<>(),
-            FlightBehaviours.stopFalling(),
-            SetEntityLookTarget.create(BirdUtils::isPlayerHoldingFood),
-            new LookAtTarget<>()
-                .runForBetween(45, 90),
-            new MoveToWalkTarget<>()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends BlueJayEntity> coreActivity() {
+    return BirdBrain.core(
+        new WakeUp<>(),
+        new FloatToSurfaceOfFluid<>(),
+        FlightBehaviours.stopFalling(),
+        SetEntityLookTarget.create(BirdUtils::isPlayerHoldingFood),
+        new LookAtTarget<>().runForBetween(45, 90),
+        new MoveToWalkTarget<>());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends BlueJayEntity> avoidActivity() {
-        return BirdBrain.avoid(
-            CustomBehaviours.setAvoidEntityWalkTarget()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends BlueJayEntity> avoidActivity() {
+    return BirdBrain.avoid(CustomBehaviours.setAvoidEntityWalkTarget());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends BlueJayEntity> forageActivity() {
-        return BirdBrain.forage(
-            new OneRandomBehaviour<>(
-                CompositeBehaviours.forage(),
-                CompositeBehaviours.perch()
-            )
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends BlueJayEntity> forageActivity() {
+    return BirdBrain.forage(
+        new OneRandomBehaviour<>(CompositeBehaviours.forage(), CompositeBehaviours.perch()));
+  }
 
-    @Override
-    public BrainActivityGroup<? extends BlueJayEntity> idleActivity() {
-        return BirdBrain.idle(
-            CompositeBehaviours.perch()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends BlueJayEntity> idleActivity() {
+    return BirdBrain.idle(CompositeBehaviours.perch());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends BlueJayEntity> pickUpActivity() {
-        return BirdBrain.pickUp(
-            CompositeBehaviours.tryPickUpFood()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends BlueJayEntity> pickUpActivity() {
+    return BirdBrain.pickUp(CompositeBehaviours.tryPickUpFood());
+  }
 
-    @Override
-    public BrainActivityGroup<? extends BlueJayEntity> restActivity() {
-        return BirdBrain.rest(
-            CompositeBehaviours.trySetPerchRestTarget(),
-            CustomBehaviours.sleepIfPerched()
-        );
-    }
+  @Override
+  public BrainActivityGroup<? extends BlueJayEntity> restActivity() {
+    return BirdBrain.rest(
+        CompositeBehaviours.trySetPerchRestTarget(), CustomBehaviours.sleepIfPerched());
+  }
 
-    @Nullable
-    @Override
-    public SmartBrainSchedule getSchedule() {
-        return FPSchedules.FORAGER.get();
-    }
+  @Nullable
+  @Override
+  public SmartBrainSchedule getSchedule() {
+    return FPSchedules.FORAGER.get();
+  }
 
-    @Override
-    protected void customServerAiStep() {
-        this.tickBrain(this);
-        super.customServerAiStep();
-    }
+  @Override
+  protected void customServerAiStep(ServerLevel level) {
+    this.tickBrain(this);
+    super.customServerAiStep(level);
+  }
 }

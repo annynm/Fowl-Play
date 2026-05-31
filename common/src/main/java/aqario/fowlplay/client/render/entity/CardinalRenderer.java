@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.CardinalModel;
 import aqario.fowlplay.common.entity.bird.passerine.CardinalEntity;
 import aqario.fowlplay.core.FowlPlay;
@@ -17,7 +17,7 @@ public class CardinalRenderer extends MobRenderer<CardinalEntity, BirdRenderStat
     super(context, new CardinalModel(context.bakeLayer(CardinalModel.MODEL_LAYER)), 0.15f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.085, -0.1475)));
+            this, net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(), new Vec3(0.0, -0.085, -0.1475)));
   }
 
   @Override
@@ -26,7 +26,7 @@ public class CardinalRenderer extends MobRenderer<CardinalEntity, BirdRenderStat
   }
 
   @Override
-  protected void extractRenderState(
+  public void extractRenderState(
       CardinalEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
@@ -36,7 +36,7 @@ public class CardinalRenderer extends MobRenderer<CardinalEntity, BirdRenderStat
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     state.isFlying = entity.isFlying();
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
     state.viewXRot = entity.getViewXRot(partialTick);

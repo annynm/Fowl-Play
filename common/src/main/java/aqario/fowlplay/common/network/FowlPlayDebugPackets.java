@@ -17,7 +17,6 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.DebugEntityNameGenerator;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.damagesource.DamageSource;
@@ -35,7 +34,6 @@ import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.level.pathfinder.Path;
-import net.tslat.smartbrainlib.util.BrainUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class FowlPlayDebugPackets {
@@ -68,20 +66,23 @@ public class FowlPlayDebugPackets {
 
     Brain<?> brain = bird.getBrain();
     String name = DebugEntityNameGenerator.getEntityName(bird);
-    String inventory = "";
+    String inventory = " ";
     Path path = null;
     boolean flying = bird instanceof FlyingBirdEntity flyingBird && flyingBird.isFlying();
+
     if (bird instanceof InventoryCarrier inventoryOwner) {
       inventory =
-          inventoryOwner.getInventory().isEmpty() ? "" : inventoryOwner.getInventory().toString();
+          inventoryOwner.getInventory().isEmpty() ? " " : inventoryOwner.getInventory().toString();
     }
-    if (BrainUtils.hasMemory(brain, MemoryModuleType.PATH)) {
-      path = BrainUtils.getMemory(brain, MemoryModuleType.PATH);
+
+    if (brain.hasMemoryValue(MemoryModuleType.PATH)) {
+      path = brain.getMemory(MemoryModuleType.PATH).orElse(null);
     }
+
     List<String> trusting = new ArrayList<>();
     if (bird instanceof TrustingBirdEntity trustingBird) {
       trustingBird
-          .getTrustedUuids()
+          .getTrusterUUID()
           .forEach(
               uuid -> {
                 Player player = bird.level().getPlayerByUUID(uuid);
@@ -97,10 +98,7 @@ public class FowlPlayDebugPackets {
     List<String> behaviors =
         brain.getRunningBehaviors().stream().map(BehaviorControl::debugString).toList();
     List<String> memories = getMemoryDescriptions(bird, bird.level().getGameTime());
-    String schedule =
-        Optional.ofNullable(BuiltInRegistries.SCHEDULE.getKey(brain.getSchedule()))
-            .map(Identifier::getPath)
-            .orElse(null);
+    String schedule = null; // No schedule retrieval available in this context
     Set<BlockPos> pois = Set.of();
     Set<BlockPos> potentialPois = Set.of();
 

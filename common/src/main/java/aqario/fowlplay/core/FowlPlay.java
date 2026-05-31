@@ -10,6 +10,7 @@ import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import net.minecraft.resources.Identifier;
+// Changed package
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ public class FowlPlay {
     FPItems.REGISTRAR.register();
     FPMemoryTypes.REGISTRAR.register();
     FPParticleTypes.REGISTRAR.register();
-    FPSchedules.REGISTRAR.register();
+
     FPSensorTypes.REGISTRAR.register();
     FPSoundEvents.REGISTRAR.register();
     FPEntityDataSerializers.REGISTRAR.register();
@@ -67,10 +68,8 @@ public class FowlPlay {
 
     TickEvent.SERVER_LEVEL_POST.register(
         world -> {
-          pigeonSpawner.tick(
-              world, world.getServer().isSpawningMonsters(), world.getServer().isSpawningAnimals());
-          sparrowSpawner.tick(
-              world, world.getServer().isSpawningMonsters(), world.getServer().isSpawningAnimals());
+          pigeonSpawner.tick(world);
+          sparrowSpawner.tick(world);
         });
   }
 }

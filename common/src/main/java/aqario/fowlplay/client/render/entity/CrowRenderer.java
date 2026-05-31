@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.CrowModel;
 import aqario.fowlplay.common.entity.bird.passerine.CrowEntity;
 import aqario.fowlplay.core.FowlPlay;
@@ -17,7 +17,7 @@ public class CrowRenderer extends MobRenderer<CrowEntity, BirdRenderState, CrowM
     super(context, new CrowModel(context.bakeLayer(CrowModel.MODEL_LAYER)), 0.15f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.0225, -0.1475)));
+            this, net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(), new Vec3(0.0, -0.0225, -0.1475)));
   }
 
   @Override
@@ -26,7 +26,7 @@ public class CrowRenderer extends MobRenderer<CrowEntity, BirdRenderState, CrowM
   }
 
   @Override
-  protected void extractRenderState(CrowEntity entity, BirdRenderState state, float partialTick) {
+  public void extractRenderState(CrowEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
     state.limbSwing = entity.walkAnimation.position();
@@ -35,7 +35,7 @@ public class CrowRenderer extends MobRenderer<CrowEntity, BirdRenderState, CrowM
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     state.isFlying = entity.isFlying();
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
     state.viewXRot = entity.getViewXRot(partialTick);

@@ -1,6 +1,6 @@
 package aqario.fowlplay.client.render.entity;
 
-import aqario.fowlplay.client.render.entity.BirdHeldItemLayer;
+import aqario.fowlplay.client.render.entity.layer.BirdHeldItemLayer;
 import aqario.fowlplay.client.render.entity.model.DuckModel;
 import aqario.fowlplay.common.entity.bird.waterfowl.DuckEntity;
 import aqario.fowlplay.core.FowlPlay;
@@ -19,7 +19,7 @@ public class DuckRenderer extends MobRenderer<DuckEntity, BirdRenderState, DuckM
     super(context, new DuckModel(context.bakeLayer(DuckModel.MODEL_LAYER)), 0.3f);
     this.addLayer(
         new BirdHeldItemLayer<>(
-            this, context.getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
+            this, net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer(), new Vec3(0.0, -0.05375, -0.1475)));
   }
 
   @Override
@@ -28,7 +28,7 @@ public class DuckRenderer extends MobRenderer<DuckEntity, BirdRenderState, DuckM
   }
 
   @Override
-  protected void extractRenderState(DuckEntity entity, BirdRenderState state, float partialTick) {
+  public void extractRenderState(DuckEntity entity, BirdRenderState state, float partialTick) {
     super.extractRenderState(entity, state, partialTick);
     state.ageInTicks = entity.tickCount + partialTick;
     state.limbSwing = entity.walkAnimation.position();
@@ -37,7 +37,7 @@ public class DuckRenderer extends MobRenderer<DuckEntity, BirdRenderState, DuckM
     state.headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
     state.headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     state.isFlying = entity.isFlying();
-    state.isInWaterOrBubble = entity.isInWaterOrBubble();
+    state.isInWaterOrBubble = entity.isInWater();
     state.onGround = entity.onGround();
     state.isSleeping = entity.isSleeping();
     state.viewXRot = entity.getViewXRot(partialTick);
